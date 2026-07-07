@@ -1,18 +1,18 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
-import MyPlugin from './main';
+import VimCommandsPlugin from './main';
 
-export interface MyPluginSettings {
+export interface VimCommandsPluginSettings {
 	mySetting: string;
 }
 
-export const DEFAULT_SETTINGS: MyPluginSettings = {
+export const DEFAULT_SETTINGS: VimCommandsPluginSettings = {
 	mySetting: 'default',
 };
 
 export class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+	plugin: VimCommandsPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: VimCommandsPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}

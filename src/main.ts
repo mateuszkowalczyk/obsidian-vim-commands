@@ -8,14 +8,14 @@ import {
 } from 'obsidian';
 import {
 	DEFAULT_SETTINGS,
-	MyPluginSettings,
+	VimCommandsPluginSettings,
 	SampleSettingTab,
 } from './settings';
 
 // Remember to rename these classes and interfaces!
 
-export default class MyPlugin extends Plugin {
-	settings!: MyPluginSettings;
+export default class VimCommandsPlugin extends Plugin {
+	settings!: VimCommandsPluginSettings;
 
 	async onload() {
 		await this.loadSettings();
@@ -86,13 +86,13 @@ export default class MyPlugin extends Plugin {
 		);
 	}
 
-	onunload() {}
+	onunload() { }
 
 	async loadSettings() {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			(await this.loadData()) as Partial<MyPluginSettings>,
+			(await this.loadData()) as Partial<VimCommandsPluginSettings>,
 		);
 	}
 

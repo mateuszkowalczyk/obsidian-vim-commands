@@ -1,15 +1,16 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import VimCommandsPlugin from './main';
+import { DEFAULT_CONFIG_FILE_PATH, loadMappings } from './mappings';
 
 export interface VimCommandsPluginSettings {
-	mySetting: string;
+	configFilePath: string;
 }
 
 export const DEFAULT_SETTINGS: VimCommandsPluginSettings = {
-	mySetting: 'default',
+	configFilePath: DEFAULT_CONFIG_FILE_PATH,
 };
 
-export class SampleSettingTab extends PluginSettingTab {
+export class VimCommandsSettingTab extends PluginSettingTab {
 	plugin: VimCommandsPlugin;
 
 	constructor(app: App, plugin: VimCommandsPlugin) {
@@ -23,15 +24,19 @@ export class SampleSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName('Settings #1')
-			.setDesc("It's a secret")
+			.setName('Config file path')
+			.setDesc('Path to the vimrc-style command mapping file in this vault.')
 			.addText((text) =>
 				text
-					.setPlaceholder('Enter your secret')
-					.setValue(this.plugin.settings.mySetting)
+					.setPlaceholder(DEFAULT_CONFIG_FILE_PATH)
+					.setValue(this.plugin.settings.configFilePath)
 					.onChange(async (value) => {
-						this.plugin.settings.mySetting = value;
+						this.plugin.settings.configFilePath = value;
 						await this.plugin.saveSettings();
+						this.plugin.mappingLines = await loadMappings(
+							this.app.vault,
+							this.plugin.settings.configFilePath,
+						);
 					}),
 			);
 	}

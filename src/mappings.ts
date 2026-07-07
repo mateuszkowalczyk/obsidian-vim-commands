@@ -1,4 +1,4 @@
-import { normalizePath, Vault } from 'obsidian';
+import { normalizePath, type Vault } from 'obsidian';
 
 export const DEFAULT_CONFIG_FILE_PATH = '.vimrc';
 

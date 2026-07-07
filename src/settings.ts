@@ -1,6 +1,6 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import VimCommandsPlugin from './main';
-import { DEFAULT_CONFIG_FILE_PATH, loadMappings } from './mappings';
+import { DEFAULT_CONFIG_FILE_PATH } from './mappings';
 
 export interface VimCommandsPluginSettings {
 	configFilePath: string;
@@ -33,10 +33,7 @@ export class VimCommandsSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.configFilePath = value;
 						await this.plugin.saveSettings();
-						this.plugin.mappingLines = await loadMappings(
-							this.app.vault,
-							this.plugin.settings.configFilePath,
-						);
+						await this.plugin.reloadMappings();
 					}),
 			);
 	}

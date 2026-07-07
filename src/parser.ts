@@ -1,4 +1,9 @@
 export interface CommandMapping {
+	keys: string[];
+	commandId: string;
+}
+
+export interface ParsedNmapObcommandLine {
 	keys: string;
 	commandId: string;
 }
@@ -7,7 +12,7 @@ export const DEFAULT_LEADER_KEY = '<Space>';
 
 export function parseNmapObcommandLine(
 	line: string,
-): CommandMapping | null {
+): ParsedNmapObcommandLine | null {
 	const match = line.match(
 		/^nmap\s+(\S+)\s+:obcommand(?:<space>|\s+)(\S+)<CR>\s*$/,
 	);
@@ -77,10 +82,40 @@ export function parseMappingLines(
 		return [
 			{
 				...mapping,
-				keys: expandLeaderKeySequence(mapping.keys, leaderKey),
+				keys: tokenizeKeySequence(
+					expandLeaderKeySequence(mapping.keys, leaderKey),
+				),
 			},
 		];
 	});
+}
+
+export function tokenizeKeySequence(keys: string): string[] {
+	const tokens: string[] = [];
+	let index = 0;
+
+	while (index < keys.length) {
+		const key = keys[index];
+
+		if (!key) {
+			break;
+		}
+
+		if (key === '<') {
+			const tokenEndIndex = keys.indexOf('>', index + 1);
+
+			if (tokenEndIndex !== -1) {
+				tokens.push(keys.slice(index, tokenEndIndex + 1));
+				index = tokenEndIndex + 1;
+				continue;
+			}
+		}
+
+		tokens.push(key);
+		index += 1;
+	}
+
+	return tokens;
 }
 
 function normalizeLeaderKey(leaderKey: string): string {

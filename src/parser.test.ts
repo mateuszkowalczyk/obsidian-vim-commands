@@ -6,6 +6,7 @@ import {
 	parseMapleaderLine,
 	parseMappingLines,
 	parseNmapObcommandLine,
+	tokenizeKeySequence,
 } from './parser';
 
 describe('parseNmapObcommandLine', () => {
@@ -102,6 +103,18 @@ describe('expandLeaderKeySequence', () => {
 	});
 });
 
+describe('tokenizeKeySequence', () => {
+	it('splits Vim-style key sequences into canonical tokens', () => {
+		expect(tokenizeKeySequence('<Space><Space>')).toEqual([
+			'<Space>',
+			'<Space>',
+		]);
+		expect(tokenizeKeySequence('<C-o>')).toEqual(['<C-o>']);
+		expect(tokenizeKeySequence('<A-p>')).toEqual(['<A-p>']);
+		expect(tokenizeKeySequence('H/:|-')).toEqual(['H', '/', ':', '|', '-']);
+	});
+});
+
 describe('parseMappingLines', () => {
 	it('parses command mappings with configured leader expansion', () => {
 		expect(
@@ -112,7 +125,7 @@ describe('parseMappingLines', () => {
 			]),
 		).toEqual([
 			{
-				keys: ',gg',
+				keys: [',', 'g', 'g'],
 				commandId: 'obsidian-git:open-git-view',
 			},
 		]);
@@ -126,8 +139,26 @@ describe('parseMappingLines', () => {
 			]),
 		).toEqual([
 			{
-				keys: '<C-b>g',
+				keys: ['<C-b>', 'g'],
 				commandId: 'global-search:open',
+			},
+		]);
+	});
+
+	it('stores parsed mappings as normalized token arrays', () => {
+		expect(
+			parseMappingLines([
+				'nmap <Space>/ :obcommand<space>global-search:open<CR>',
+				'nmap <A-p> :obcommand<space>command-palette:open<CR>',
+			]),
+		).toEqual([
+			{
+				keys: ['<Space>', '/'],
+				commandId: 'global-search:open',
+			},
+			{
+				keys: ['<A-p>'],
+				commandId: 'command-palette:open',
 			},
 		]);
 	});

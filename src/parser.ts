@@ -3,7 +3,7 @@ export interface CommandMapping {
 	commandId: string;
 }
 
-export interface ParsedNmapObcommandLine {
+export interface RawCommandMapping {
 	keys: string;
 	commandId: string;
 }
@@ -12,7 +12,7 @@ export const DEFAULT_LEADER_KEY = '<Space>';
 
 export function parseNmapObcommandLine(
 	line: string,
-): ParsedNmapObcommandLine | null {
+): RawCommandMapping | null {
 	const match = line.match(
 		/^nmap\s+(\S+)\s+:obcommand(?:<space>|\s+)(\S+)<CR>\s*$/,
 	);

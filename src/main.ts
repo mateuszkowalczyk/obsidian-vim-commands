@@ -1,6 +1,6 @@
 import { Plugin } from 'obsidian';
-import { loadMappings } from './mappings';
-import { ParsedNmapObcommandLine, parseMappingLines } from './parser';
+import { loadMappingLines } from './mappings';
+import { CommandMapping, parseMappingLines } from './parser';
 import {
 	DEFAULT_SETTINGS,
 	VimCommandsPluginSettings,
@@ -9,7 +9,7 @@ import {
 
 export default class VimCommandsPlugin extends Plugin {
 	settings!: VimCommandsPluginSettings;
-	mappings: ParsedNmapObcommandLine[] = [];
+	mappings: CommandMapping[] = [];
 
 	async onload() {
 		await this.loadSettings();
@@ -33,7 +33,7 @@ export default class VimCommandsPlugin extends Plugin {
 	}
 
 	async reloadMappings() {
-		const mappingLines = await loadMappings(
+		const mappingLines = await loadMappingLines(
 			this.app.vault,
 			this.settings.configFilePath,
 		);

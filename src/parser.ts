@@ -1,4 +1,4 @@
-export interface ParsedNmapObcommandLine {
+export interface CommandMapping {
 	keys: string;
 	commandId: string;
 }
@@ -7,7 +7,7 @@ export const DEFAULT_LEADER_KEY = '<Space>';
 
 export function parseNmapObcommandLine(
 	line: string,
-): ParsedNmapObcommandLine | null {
+): CommandMapping | null {
 	const match = line.match(
 		/^nmap\s+(\S+)\s+:obcommand(?:<space>|\s+)(\S+)<CR>\s*$/,
 	);
@@ -64,7 +64,7 @@ export function expandLeaderKeySequence(
 
 export function parseMappingLines(
 	lines: string[],
-): ParsedNmapObcommandLine[] {
+): CommandMapping[] {
 	const leaderKey = parseConfiguredLeaderKey(lines);
 
 	return lines.flatMap((line) => {

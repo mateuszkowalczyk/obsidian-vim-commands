@@ -2,7 +2,7 @@ import { normalizePath, type Vault } from 'obsidian';
 
 export const DEFAULT_CONFIG_FILE_PATH = '.vimrc';
 
-export async function loadMappings(
+export async function loadMappingLines(
 	vault: Vault,
 	configFilePath = DEFAULT_CONFIG_FILE_PATH,
 ): Promise<string[]> {

@@ -1,10 +1,14 @@
 import { CommandMapping } from './parser';
 
 export type KeySequenceResult =
-	| { type: 'matched'; commandId: string }
-	| { type: 'cancelled' }
+	// Keep the buffer because it is a prefix of at least one mapping.
 	| { type: 'pending' }
-	| { type: 'reset' };
+	// Execute the mapped command and clear the buffer.
+	| { type: 'matched'; commandId: string }
+	// Clear the buffer because no mapping or prefix matches.
+	| { type: 'reset' }
+	// Clear the active buffer because the user pressed Esc.
+	| { type: 'cancelled' };
 
 export interface KeySequenceState {
 	buffer: string[];

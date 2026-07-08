@@ -37,6 +37,20 @@ describe('advanceKeySequence', () => {
 		});
 	});
 
+	it('cancels an active sequence when Esc is pressed', () => {
+		expect(advanceKeySequence(['<Space>'], '<Esc>', mappings)).toEqual({
+			buffer: [],
+			result: { type: 'cancelled' },
+		});
+	});
+
+	it('does not treat Esc as cancellation without an active sequence', () => {
+		expect(advanceKeySequence([], '<Esc>', mappings)).toEqual({
+			buffer: [],
+			result: { type: 'reset' },
+		});
+	});
+
 	it('prefers exact matches over longer prefixes', () => {
 		expect(
 			advanceKeySequence([], 'g', [

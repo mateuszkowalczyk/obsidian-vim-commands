@@ -2,6 +2,7 @@ import { CommandMapping } from './parser';
 
 export type KeySequenceResult =
 	| { type: 'matched'; commandId: string }
+	| { type: 'cancelled' }
 	| { type: 'pending' }
 	| { type: 'reset' };
 
@@ -15,6 +16,10 @@ export function advanceKeySequence(
 	key: string,
 	mappings: CommandMapping[],
 ): KeySequenceState {
+	if (key === '<Esc>' && buffer.length > 0) {
+		return { buffer: [], result: { type: 'cancelled' } };
+	}
+
 	const nextBuffer = [...buffer, key];
 	const exactMatch = mappings.find((mapping) =>
 		isSameSequence(mapping.keys, nextBuffer),

@@ -50,7 +50,7 @@ export default class VimCommandsPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	reloadMappingsDebounced(delayMs = 1000) {
+	reloadMappingsDebounced(delayMs = 2000) {
 		this.clearReloadMappingsTimeout();
 
 		this.reloadMappingsTimeout = window.setTimeout(() => {

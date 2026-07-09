@@ -4,7 +4,13 @@ import { advanceKeySequence } from './sequence';
 
 type KeydownEventLike = Pick<
 	KeyboardEvent,
-	'altKey' | 'ctrlKey' | 'key' | 'metaKey' | 'preventDefault' | 'target'
+	| 'altKey'
+	| 'ctrlKey'
+	| 'key'
+	| 'metaKey'
+	| 'preventDefault'
+	| 'stopPropagation'
+	| 'target'
 >;
 
 interface KeydownHandlerOptions {
@@ -41,11 +47,13 @@ export function createKeydownHandler({
 
 		if (state.result.type === 'pending') {
 			event.preventDefault();
+			event.stopPropagation();
 			return;
 		}
 
 		if (state.result.type === 'matched') {
 			event.preventDefault();
+			event.stopPropagation();
 			onCommand(state.result.commandId);
 			return;
 		}

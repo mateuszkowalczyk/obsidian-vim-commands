@@ -29,6 +29,7 @@ export default class VimCommandsPlugin extends Plugin {
 					executeObsidianCommand(this.app, commandId);
 				},
 			}),
+			{ capture: true },
 		);
 
 		this.addSettingTab(new VimCommandsSettingTab(this.app, this));

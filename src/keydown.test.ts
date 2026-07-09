@@ -18,6 +18,15 @@ describe('createKeydownHandler', () => {
 		expect(onCommand).not.toHaveBeenCalled();
 	});
 
+	it('stops propagation while a sequence is pending', () => {
+		const { handler } = setupHandler();
+		const event = keydownEvent({ key: ' ' });
+
+		handler(event);
+
+		expect(event.stopPropagation).toHaveBeenCalledOnce();
+	});
+
 	it('executes and prevents default when a sequence matches', () => {
 		const { handler, onCommand } = setupHandler();
 
@@ -26,7 +35,19 @@ describe('createKeydownHandler', () => {
 		handler(event);
 
 		expect(event.preventDefault).toHaveBeenCalledOnce();
+		expect(event.stopPropagation).toHaveBeenCalledOnce();
 		expect(onCommand).toHaveBeenCalledWith('global-search:open');
+	});
+
+	it('does not stop propagation when no mapping matches', () => {
+		const { handler, onCommand } = setupHandler();
+		const event = keydownEvent({ key: 'x' });
+
+		handler(event);
+
+		expect(event.stopPropagation).not.toHaveBeenCalled();
+		expect(event.preventDefault).not.toHaveBeenCalled();
+		expect(onCommand).not.toHaveBeenCalled();
 	});
 
 	it('executes single-key mappings', () => {
@@ -36,17 +57,8 @@ describe('createKeydownHandler', () => {
 		handler(event);
 
 		expect(event.preventDefault).toHaveBeenCalledOnce();
+		expect(event.stopPropagation).toHaveBeenCalledOnce();
 		expect(onCommand).toHaveBeenCalledWith('workspace:previous-tab');
-	});
-
-	it('does not prevent default when no mapping matches', () => {
-		const { handler, onCommand } = setupHandler();
-		const event = keydownEvent({ key: 'x' });
-
-		handler(event);
-
-		expect(event.preventDefault).not.toHaveBeenCalled();
-		expect(onCommand).not.toHaveBeenCalled();
 	});
 
 	it('prevents default when Esc cancels an active sequence', () => {
@@ -157,7 +169,13 @@ function keydownEvent(
 	overrides: Partial<KeyboardEvent> = {},
 ): Pick<
 	KeyboardEvent,
-	'altKey' | 'ctrlKey' | 'key' | 'metaKey' | 'preventDefault' | 'target'
+	| 'altKey'
+	| 'ctrlKey'
+	| 'key'
+	| 'metaKey'
+	| 'preventDefault'
+	| 'stopPropagation'
+	| 'target'
 > {
 	return {
 		altKey: false,
@@ -165,6 +183,7 @@ function keydownEvent(
 		key: '',
 		metaKey: false,
 		preventDefault: vi.fn(),
+		stopPropagation: vi.fn(),
 		target: null,
 		...overrides,
 	};
@@ -182,7 +201,7 @@ function target({
 	return {
 		closest: (selector: string) =>
 			(markdownEditor && selector.includes('markdown-source-view')) ||
-			(closestEditable && selector.includes('input, textarea, select'))
+				(closestEditable && selector.includes('input, textarea, select'))
 				? ({} as Element)
 				: null,
 		matches: (selector: string) =>

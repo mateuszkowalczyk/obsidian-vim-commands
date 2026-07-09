@@ -5,11 +5,11 @@ export const DEFAULT_CONFIG_FILE_PATH = '.vimrc';
 export async function loadMappingLines(
 	vault: Vault,
 	configFilePath = DEFAULT_CONFIG_FILE_PATH,
-): Promise<string[]> {
+): Promise<string[] | null> {
 	const path = normalizePath(configFilePath.trim() || DEFAULT_CONFIG_FILE_PATH);
 
 	if (!(await vault.adapter.exists(path))) {
-		return [];
+		return null;
 	}
 
 	const contents = await vault.adapter.read(path);

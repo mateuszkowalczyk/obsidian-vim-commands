@@ -1,4 +1,4 @@
-import { Plugin } from 'obsidian';
+import { normalizePath, Notice, Plugin } from 'obsidian';
 import { createKeydownHandler } from './keydown';
 import { loadMappingLines } from './mappings';
 import { executeObsidianCommand } from './obsidianCommands';
@@ -52,6 +52,16 @@ export default class VimCommandsPlugin extends Plugin {
 			this.app.vault,
 			this.settings.configFilePath,
 		);
+
+		if (mappingLines === null) {
+			const path = normalizePath(
+				this.settings.configFilePath.trim() || DEFAULT_SETTINGS.configFilePath,
+			);
+			new Notice(`Vim commands config file not found: ${path}`);
+			this.mappings = [];
+			return;
+		}
+
 		this.mappings = parseMappingLines(mappingLines);
 	}
 }

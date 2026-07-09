@@ -50,7 +50,7 @@ export class VimCommandsSettingTab extends PluginSettingTab {
 				.onChange(async (value) => {
 					this.plugin.settings.configFilePath = value;
 					await this.plugin.saveSettings();
-					await this.plugin.reloadMappings();
+					this.plugin.reloadMappingsDebounced();
 				}),
 		);
 	}

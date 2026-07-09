@@ -12,6 +12,7 @@ import {
 export default class VimCommandsPlugin extends Plugin {
 	settings!: VimCommandsPluginSettings;
 	mappings: CommandMapping[] = [];
+	private reloadMappingsTimeout: number | null = null;
 
 	async onload() {
 		await this.loadSettings();
@@ -33,7 +34,9 @@ export default class VimCommandsPlugin extends Plugin {
 		this.addSettingTab(new VimCommandsSettingTab(this.app, this));
 	}
 
-	onunload() { }
+	onunload() {
+		this.clearReloadMappingsTimeout();
+	}
 
 	async loadSettings() {
 		this.settings = Object.assign(
@@ -45,6 +48,24 @@ export default class VimCommandsPlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+
+	reloadMappingsDebounced(delayMs = 1000) {
+		this.clearReloadMappingsTimeout();
+
+		this.reloadMappingsTimeout = window.setTimeout(() => {
+			this.reloadMappingsTimeout = null;
+			void this.reloadMappings();
+		}, delayMs);
+	}
+
+	private clearReloadMappingsTimeout() {
+		if (this.reloadMappingsTimeout === null) {
+			return;
+		}
+
+		window.clearTimeout(this.reloadMappingsTimeout);
+		this.reloadMappingsTimeout = null;
 	}
 
 	async reloadMappings() {

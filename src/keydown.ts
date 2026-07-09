@@ -74,11 +74,15 @@ export function shouldIgnoreKeydownTarget(
 
 	const element = target as ElementLike;
 
+	if (isEditableTarget(element)) {
+		return true;
+	}
+
 	if (isMarkdownEditorTarget(target)) {
 		return isVimInsertModeTarget(target);
 	}
 
-	return isEditableTarget(element);
+	return false;
 }
 
 export function isMarkdownEditorTarget(target: EventTarget | null): boolean {
@@ -90,13 +94,10 @@ export function isMarkdownEditorTarget(target: EventTarget | null): boolean {
 }
 
 function isEditableTarget(element: ElementLike): boolean {
-	const selector = `${FORM_ENTRY_SELECTOR}, ${CONTENT_EDITABLE_SELECTOR}`;
-
-	if (element.matches?.(selector)) {
-		return true;
-	}
-
-	return Boolean(element.closest?.(selector));
+	const editable = element.closest?.(
+		`${FORM_ENTRY_SELECTOR}, ${CONTENT_EDITABLE_SELECTOR}`,
+	);
+	return editable != null && !editable.matches?.('.cm-content');
 }
 
 interface ElementLike {

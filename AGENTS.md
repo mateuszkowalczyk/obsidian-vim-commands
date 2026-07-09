@@ -259,6 +259,7 @@ this.registerInterval(
 - Commands not appearing: verify `addCommand` runs after `onload` and IDs are unique.
 - Settings not persisting: ensure `loadData`/`saveData` are awaited and you re-render the UI after changes.
 - Mobile-only issues: confirm you're not using desktop-only APIs; check `isDesktopOnly` and adjust.
+- **Reload the plugin after finalizing changes**: once `npm run build` succeeds, reload the plugin in Obsidian so the new `main.js` is loaded. Use the CLI command `obsidian plugin:reload id=<plugin-id>` (replace `<plugin-id>` with the actual plugin ID).
 
 ## References
 

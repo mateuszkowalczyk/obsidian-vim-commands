@@ -1,12 +1,14 @@
 import { Plugin } from 'obsidian';
+import { createKeydownHandler } from './keydown';
 import { loadMappingLines } from './mappings';
+import { executeObsidianCommand } from './obsidianCommands';
+import { isVimInsertModeTarget } from './obsidianVim';
 import { CommandMapping, parseMappingLines } from './parser';
 import {
 	DEFAULT_SETTINGS,
 	VimCommandsPluginSettings,
 	VimCommandsSettingTab,
 } from './settings';
-
 export default class VimCommandsPlugin extends Plugin {
 	settings!: VimCommandsPluginSettings;
 	mappings: CommandMapping[] = [];
@@ -14,6 +16,19 @@ export default class VimCommandsPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 		await this.reloadMappings();
+
+		this.registerDomEvent(
+			window,
+			'keydown',
+			createKeydownHandler({
+				getMappings: () => this.mappings,
+				isVimInsertModeTarget: (target) =>
+					isVimInsertModeTarget(this.app, target),
+				onCommand: (commandId) => {
+					executeObsidianCommand(this.app, commandId);
+				},
+			}),
+		);
 
 		this.addSettingTab(new VimCommandsSettingTab(this.app, this));
 	}

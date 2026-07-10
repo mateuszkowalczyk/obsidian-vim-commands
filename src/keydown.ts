@@ -32,7 +32,21 @@ export function createKeydownHandler({
 	let buffer: string[] = [];
 
 	return (event) => {
-		if (shouldIgnoreKeydownTarget(event.target, isVimInsertModeTarget)) {
+		if (isTextEntryTarget(event.target)) {
+			return;
+		}
+
+		const markdownEditorTarget = isMarkdownEditorTarget(event.target);
+
+		if (markdownEditorTarget && isVimInsertModeTarget(event.target)) {
+			return;
+		}
+
+		const mappings = markdownEditorTarget
+			? getMappings().filter((mapping) => mapping.requiresDomFallback)
+			: getMappings();
+
+		if (mappings.length === 0) {
 			return;
 		}
 
@@ -42,7 +56,7 @@ export function createKeydownHandler({
 			return;
 		}
 
-		const state = advanceKeySequence(buffer, key, getMappings());
+		const state = advanceKeySequence(buffer, key, mappings);
 		buffer = state.buffer;
 
 		if (state.result.type === 'pending') {
@@ -64,25 +78,12 @@ export function createKeydownHandler({
 	};
 }
 
-export function shouldIgnoreKeydownTarget(
-	target: EventTarget | null,
-	isVimInsertModeTarget: (target: EventTarget | null) => boolean = () => false,
-): boolean {
+export function isTextEntryTarget(target: EventTarget | null): boolean {
 	if (!target || typeof target !== 'object') {
 		return false;
 	}
 
-	const element = target as ElementLike;
-
-	if (isEditableTarget(element)) {
-		return true;
-	}
-
-	if (isMarkdownEditorTarget(target)) {
-		return isVimInsertModeTarget(target);
-	}
-
-	return false;
+	return isEditableTarget(target as ElementLike);
 }
 
 export function isMarkdownEditorTarget(target: EventTarget | null): boolean {

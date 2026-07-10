@@ -34,6 +34,8 @@ describe('parseNmapObcommandLine', () => {
 
 	it('ignores unsupported mappings', () => {
 		expect(parseNmapObcommandLine('nmap j gj')).toBeNull();
+		expect(parseNmapObcommandLine('nnoremap j :obcommand test:run<CR>')).toBeNull();
+		expect(parseNmapObcommandLine('imap j :obcommand test:run<CR>')).toBeNull();
 		expect(parseNmapObcommandLine('set tabstop=4')).toBeNull();
 	});
 
@@ -128,6 +130,7 @@ describe('parseMappingLines', () => {
 			{
 				keys: [',', 'g', 'g'],
 				commandId: 'obsidian-git:open-git-view',
+				requiresDomFallback: true,
 			},
 		]);
 	});
@@ -142,6 +145,7 @@ describe('parseMappingLines', () => {
 			{
 				keys: ['<C-b>', 'g'],
 				commandId: 'global-search:open',
+				requiresDomFallback: true,
 			},
 		]);
 	});
@@ -156,11 +160,12 @@ describe('parseMappingLines', () => {
 			{
 				keys: ['\\', 'g'],
 				commandId: 'global-search:open',
+				requiresDomFallback: true,
 			},
 		]);
 	});
 
-	it('stores parsed mappings as normalized token arrays', () => {
+	it('routes direct Space mappings through the DOM fallback', () => {
 		expect(
 			parseMappingLines([
 				'nmap <Space>/ :obcommand<space>global-search:open<CR>',
@@ -170,10 +175,12 @@ describe('parseMappingLines', () => {
 			{
 				keys: ['<Space>', '/'],
 				commandId: 'global-search:open',
+				requiresDomFallback: true,
 			},
 			{
 				keys: ['<A-p>'],
 				commandId: 'command-palette:open',
+				requiresDomFallback: false,
 			},
 		]);
 	});

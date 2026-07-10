@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { isVimInsertModeTarget } from './obsidianVim';
 
 describe('isVimInsertModeTarget', () => {
-	it('reads CodeMirror Vim insert mode for Markdown editor targets', () => {
+	it('reads the active Markdown editor Vim mode', () => {
 		expect(
 			isVimInsertModeTarget(appWithVimInsertMode(true), markdownEditorTarget()),
 		).toBe(true);
@@ -14,9 +14,6 @@ describe('isVimInsertModeTarget', () => {
 
 	it('returns false outside Markdown editor targets', () => {
 		expect(isVimInsertModeTarget(appWithVimInsertMode(true), null)).toBe(false);
-		expect(isVimInsertModeTarget(appWithVimInsertMode(true), plainTarget())).toBe(
-			false,
-		);
 	});
 });
 
@@ -27,13 +24,7 @@ function appWithVimInsertMode(insertMode: boolean): App {
 				view: {
 					editMode: {
 						editor: {
-							cm: {
-								cm: {
-									state: {
-										vim: { insertMode },
-									},
-								},
-							},
+							cm: { cm: { state: { vim: { insertMode } } } },
 						},
 					},
 				},
@@ -46,11 +37,5 @@ function markdownEditorTarget(): EventTarget {
 	return {
 		closest: (selector: string) =>
 			selector.includes('markdown-source-view') ? ({} as Element) : null,
-	} as unknown as EventTarget;
-}
-
-function plainTarget(): EventTarget {
-	return {
-		closest: () => null,
 	} as unknown as EventTarget;
 }

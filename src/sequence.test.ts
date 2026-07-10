@@ -3,9 +3,21 @@ import { CommandMapping } from './parser';
 import { advanceKeySequence } from './sequence';
 
 const mappings: CommandMapping[] = [
-	{ keys: ['<Space>', '<Space>'], commandId: 'switcher:open' },
-	{ keys: ['<Space>', '/'], commandId: 'global-search:open' },
-	{ keys: ['H'], commandId: 'workspace:previous-tab' },
+	{
+		keys: ['<Space>', '<Space>'],
+		commandId: 'switcher:open',
+		requiresDomFallback: true,
+	},
+	{
+		keys: ['<Space>', '/'],
+		commandId: 'global-search:open',
+		requiresDomFallback: true,
+	},
+	{
+		keys: ['H'],
+		commandId: 'workspace:previous-tab',
+		requiresDomFallback: false,
+	},
 ];
 
 describe('advanceKeySequence', () => {
@@ -54,8 +66,16 @@ describe('advanceKeySequence', () => {
 	it('prefers exact matches over longer prefixes', () => {
 		expect(
 			advanceKeySequence([], 'g', [
-				{ keys: ['g'], commandId: 'single-g' },
-				{ keys: ['g', 'g'], commandId: 'double-g' },
+				{
+					keys: ['g'],
+					commandId: 'single-g',
+					requiresDomFallback: false,
+				},
+				{
+					keys: ['g', 'g'],
+					commandId: 'double-g',
+					requiresDomFallback: false,
+				},
 			]),
 		).toEqual({
 			buffer: [],

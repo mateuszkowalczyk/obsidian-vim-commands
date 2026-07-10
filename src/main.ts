@@ -9,10 +9,14 @@ import {
 	VimCommandsPluginSettings,
 	VimCommandsSettingTab,
 } from './settings';
+import {
+	VimMappingRegistry,
+} from './vimMappings';
 export default class VimCommandsPlugin extends Plugin {
 	settings!: VimCommandsPluginSettings;
 	mappings: CommandMapping[] = [];
 	private reloadMappingsTimeout: number | null = null;
+	private vimMappings = new VimMappingRegistry();
 
 	async onload() {
 		await this.loadSettings();
@@ -32,11 +36,18 @@ export default class VimCommandsPlugin extends Plugin {
 			{ capture: true },
 		);
 
+		this.app.workspace.onLayoutReady(() => this.syncVimMappings());
+		this.registerEvent(
+			this.app.workspace.on('active-leaf-change', () =>
+				this.syncVimMappings(),
+			),
+		);
 		this.addSettingTab(new VimCommandsSettingTab(this.app, this));
 	}
 
 	onunload() {
 		this.clearReloadMappingsTimeout();
+		this.vimMappings.clear();
 	}
 
 	async loadSettings() {
@@ -70,6 +81,8 @@ export default class VimCommandsPlugin extends Plugin {
 	}
 
 	async reloadMappings() {
+		this.vimMappings.clear();
+
 		const mappingLines = await loadMappingLines(
 			this.app.vault,
 			this.settings.configFilePath,
@@ -85,5 +98,12 @@ export default class VimCommandsPlugin extends Plugin {
 		}
 
 		this.mappings = parseMappingLines(mappingLines);
+		this.syncVimMappings();
+	}
+
+	private syncVimMappings() {
+		this.vimMappings.sync(this.mappings, (commandId) =>
+			executeObsidianCommand(this.app, commandId),
+		);
 	}
 }

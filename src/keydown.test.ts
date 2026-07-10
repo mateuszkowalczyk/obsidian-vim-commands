@@ -1,10 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
 import { CommandMapping } from './parser';
-import { createKeydownHandler, shouldIgnoreKeydownTarget } from './keydown';
+import { createKeydownHandler, isTextEntryTarget } from './keydown';
 
 const mappings: CommandMapping[] = [
-	{ keys: ['<Space>', '/'], commandId: 'global-search:open' },
-	{ keys: ['H'], commandId: 'workspace:previous-tab' },
+	{
+		keys: ['<Space>', '/'],
+		commandId: 'global-search:open',
+		requiresDomFallback: true,
+	},
+	{
+		keys: ['H'],
+		commandId: 'workspace:previous-tab',
+		requiresDomFallback: false,
+	},
 ];
 
 describe('createKeydownHandler', () => {
@@ -97,14 +105,15 @@ describe('createKeydownHandler', () => {
 
 	it('ignores editable targets inside the markdown view', () => {
 		const { handler, onCommand } = setupHandler();
-		const event = keydownEvent({
-			key: 'H',
-			target: target({ markdownEditor: true, matchesEditable: true }),
-		});
+		const inlineTitle = target({ markdownEditor: true, matchesEditable: true });
+		const leaderEvent = keydownEvent({ key: ' ', target: inlineTitle });
+		const commandEvent = keydownEvent({ key: '/', target: inlineTitle });
 
-		handler(event);
+		handler(leaderEvent);
+		handler(commandEvent);
 
-		expect(event.preventDefault).not.toHaveBeenCalled();
+		expect(leaderEvent.preventDefault).not.toHaveBeenCalled();
+		expect(commandEvent.preventDefault).not.toHaveBeenCalled();
 		expect(onCommand).not.toHaveBeenCalled();
 	});
 
@@ -121,21 +130,8 @@ describe('createKeydownHandler', () => {
 		expect(onCommand).not.toHaveBeenCalled();
 	});
 
-	it('allows mappings inside a Markdown editor in Vim normal mode', () => {
+	it('ignores Markdown editor keys in Vim normal mode', () => {
 		const { handler, onCommand } = setupHandler();
-		const event = keydownEvent({
-			key: 'H',
-			target: target({ markdownEditor: true }),
-		});
-
-		handler(event);
-
-		expect(event.preventDefault).toHaveBeenCalledOnce();
-		expect(onCommand).toHaveBeenCalledWith('workspace:previous-tab');
-	});
-
-	it('ignores Markdown editor keys when Vim is in insert mode', () => {
-		const { handler, onCommand } = setupHandler(() => true);
 		const event = keydownEvent({
 			key: 'H',
 			target: target({ markdownEditor: true }),
@@ -146,68 +142,74 @@ describe('createKeydownHandler', () => {
 		expect(event.preventDefault).not.toHaveBeenCalled();
 		expect(onCommand).not.toHaveBeenCalled();
 	});
+
+	it('handles leader mappings inside a Markdown editor in Vim normal mode', () => {
+		const { handler, onCommand } = setupHandler();
+
+		handler(
+			keydownEvent({ key: ' ', target: target({ markdownEditor: true }) }),
+		);
+		const event = keydownEvent({
+			key: '/',
+			target: target({ markdownEditor: true }),
+		});
+		handler(event);
+
+		expect(event.preventDefault).toHaveBeenCalledOnce();
+		expect(onCommand).toHaveBeenCalledWith('global-search:open');
+	});
+
+	it('ignores leader mappings inside a Markdown editor in Vim insert mode', () => {
+		const { handler, onCommand } = setupHandler(() => true);
+		const event = keydownEvent({
+			key: ' ',
+			target: target({ markdownEditor: true }),
+		});
+
+		handler(event);
+
+		expect(event.preventDefault).not.toHaveBeenCalled();
+		expect(onCommand).not.toHaveBeenCalled();
+	});
 });
 
-describe('shouldIgnoreKeydownTarget', () => {
+describe('isTextEntryTarget', () => {
 	it('detects text-entry elements', () => {
-		expect(shouldIgnoreKeydownTarget(target({ matchesEditable: true }))).toBe(
+		expect(isTextEntryTarget(target({ matchesEditable: true }))).toBe(
 			true,
 		);
-		expect(shouldIgnoreKeydownTarget(target({ closestEditable: true }))).toBe(
+		expect(isTextEntryTarget(target({ closestEditable: true }))).toBe(
 			true,
 		);
 	});
 
 	it('ignores non-text-entry targets', () => {
-		expect(shouldIgnoreKeydownTarget(null)).toBe(false);
-		expect(shouldIgnoreKeydownTarget(target())).toBe(false);
+		expect(isTextEntryTarget(null)).toBe(false);
+		expect(isTextEntryTarget(target())).toBe(false);
 	});
 
-	it('allows Markdown editor targets unless Vim insert mode is reported', () => {
-		expect(shouldIgnoreKeydownTarget(target({ markdownEditor: true }))).toBe(
-			false,
-		);
-		expect(
-			shouldIgnoreKeydownTarget(target({ markdownEditor: true }), () => true),
-		).toBe(true);
-		expect(
-			shouldIgnoreKeydownTarget(target({ markdownEditor: true }), () => false),
-		).toBe(
-			false,
-		);
+	it('does not treat Markdown editor targets as text-entry elements', () => {
+		expect(isTextEntryTarget(target({ markdownEditor: true }))).toBe(false);
 	});
 
 	it('does not treat the CodeMirror editor as an editable target', () => {
-		expect(shouldIgnoreKeydownTarget(target({ isCmEditor: true }))).toBe(false);
-		expect(
-			shouldIgnoreKeydownTarget(target({ isCmEditor: true }), () => true),
-		).toBe(true);
+		expect(isTextEntryTarget(target({ isCmEditor: true }))).toBe(false);
 	});
 
 	it('does not treat the CodeMirror content area as an editable target', () => {
-		expect(
-			shouldIgnoreKeydownTarget(target({ isCmContent: true })),
-		).toBe(false);
-		expect(
-			shouldIgnoreKeydownTarget(
-				target({ isCmContent: true }),
-				() => true,
-			),
-		).toBe(true);
+		expect(isTextEntryTarget(target({ isCmContent: true }))).toBe(false);
 	});
 
 	it('treats an input inside the CodeMirror editor as an editable target', () => {
 		expect(
-			shouldIgnoreKeydownTarget(
+			isTextEntryTarget(
 				target({ isCmEditor: true, matchesEditable: true }),
 			),
 		).toBe(true);
 	});
 });
 
-function setupHandler(
-	isVimInsertModeTarget = () => false,
-) {
+function setupHandler(isVimInsertModeTarget = () => false) {
 	const onCommand = vi.fn();
 	const handler = createKeydownHandler({
 		getMappings: () => mappings,

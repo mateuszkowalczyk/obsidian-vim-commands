@@ -1,6 +1,7 @@
 export interface CommandMapping {
 	keys: string[];
 	commandId: string;
+	requiresDomFallback: boolean;
 }
 
 export interface RawCommandMapping {
@@ -79,12 +80,17 @@ export function parseMappingLines(
 			return [];
 		}
 
+		const keys = tokenizeKeySequence(
+			expandLeaderKeySequence(mapping.keys, leaderKey),
+		);
+		const usesLeaderSyntax = mapping.keys.startsWith('<Leader>');
+		const startsWithSpace = keys[0] === '<Space>';
+
 		return [
 			{
 				...mapping,
-				keys: tokenizeKeySequence(
-					expandLeaderKeySequence(mapping.keys, leaderKey),
-				),
+				keys,
+				requiresDomFallback: usesLeaderSyntax || startsWithSpace,
 			},
 		];
 	});

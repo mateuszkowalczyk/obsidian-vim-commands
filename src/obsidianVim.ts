@@ -5,26 +5,18 @@ interface VimState {
 	insertMode?: boolean;
 }
 
-interface CodeMirrorWithVimState {
-	state?: {
-		vim?: VimState | null;
-	};
-}
-
-interface MarkdownViewWithCodeMirror {
-	editMode?: {
-		editor?: {
-			cm?: {
-				cm?: CodeMirrorWithVimState;
-			};
-		};
-	};
-}
-
 interface AppWithActiveLeaf {
 	workspace: {
 		activeLeaf?: {
-			view?: MarkdownViewWithCodeMirror;
+			view?: {
+				editMode?: {
+					editor?: {
+						cm?: {
+							cm?: { state?: { vim?: VimState | null } };
+						};
+					};
+				};
+			};
 		} | null;
 	};
 }
@@ -38,7 +30,5 @@ export function isVimInsertModeTarget(
 	}
 
 	const view = (app as unknown as AppWithActiveLeaf).workspace.activeLeaf?.view;
-	const codeMirror = view?.editMode?.editor?.cm?.cm;
-
-	return codeMirror?.state?.vim?.insertMode === true;
+	return view?.editMode?.editor?.cm?.cm?.state?.vim?.insertMode === true;
 }

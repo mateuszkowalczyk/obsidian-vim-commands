@@ -68,6 +68,7 @@ describe('parseMapleaderLine', () => {
 		expect(parseMapleaderLine('let mapleader = "\\<C-b>"')).toBe(
 			'<C-b>',
 		);
+		expect(parseMapleaderLine('let mapleader = "\\\\"')).toBe('\\');
 	});
 
 	it('ignores unsupported mapleader lines', () => {
@@ -140,6 +141,20 @@ describe('parseMappingLines', () => {
 		).toEqual([
 			{
 				keys: ['<C-b>', 'g'],
+				commandId: 'global-search:open',
+			},
+		]);
+	});
+
+	it('expands an escaped backslash leader', () => {
+		expect(
+			parseMappingLines([
+				'let mapleader = "\\\\"',
+				'nmap <Leader>g :obcommand<space>global-search:open<CR>',
+			]),
+		).toEqual([
+			{
+				keys: ['\\', 'g'],
 				commandId: 'global-search:open',
 			},
 		]);

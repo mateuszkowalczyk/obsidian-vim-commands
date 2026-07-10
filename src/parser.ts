@@ -125,5 +125,6 @@ function normalizeLeaderKey(leaderKey: string): string {
 		return specialKeyMatch[1];
 	}
 
-	return leaderKey === ' ' ? DEFAULT_LEADER_KEY : leaderKey;
+	const unescapedLeaderKey = leaderKey.replace(/\\(["\\])/g, '$1');
+	return unescapedLeaderKey === ' ' ? DEFAULT_LEADER_KEY : unescapedLeaderKey;
 }

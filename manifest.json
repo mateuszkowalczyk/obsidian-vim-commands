@@ -1,9 +1,9 @@
 {
 	"id": "vim-commands",
 	"name": "Vim Commands",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"minAppVersion": "1.12.0",
-	"description": "TODO",
+	"description": "Trigger Obsidian commands anywhere in the app from vim key sequences defined in a vimrc-style config file.",
 	"author": "Mateusz Kowalczyk",
 	"isDesktopOnly": true
 }

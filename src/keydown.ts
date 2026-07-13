@@ -22,6 +22,7 @@ interface KeydownHandlerOptions {
 const FORM_ENTRY_SELECTOR = 'input, textarea, select';
 const CONTENT_EDITABLE_SELECTOR =
 	'[contenteditable]:not([contenteditable="false"])';
+const CODEMIRROR_CONTENT_SELECTOR = '.cm-content';
 const MARKDOWN_EDITOR_SELECTOR = '.markdown-source-view, .cm-editor';
 
 export function createKeydownHandler({
@@ -98,7 +99,7 @@ function isEditableTarget(element: ElementLike): boolean {
 	const editable = element.closest?.(
 		`${FORM_ENTRY_SELECTOR}, ${CONTENT_EDITABLE_SELECTOR}`,
 	);
-	return editable != null && !editable.matches?.('.cm-content');
+	return editable != null && !editable.matches?.(CODEMIRROR_CONTENT_SELECTOR);
 }
 
 interface ElementLike {

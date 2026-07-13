@@ -261,20 +261,15 @@ function target({
 } = {}): EventTarget {
 	return {
 		closest: (selector: string) => {
-			if (isCmContent && selector.includes('.cm-content')) return {} as Element;
+			if (isCmContent && selector.includes('contenteditable')) {
+				return { matches: (s: string) => s === '.cm-content' };
+			}
 			if (isCmContent && (selector.includes('markdown-source-view') || selector.includes('.cm-editor'))) return {} as Element;
 			if (isCmEditor && selector.includes('.cm-editor')) return {} as Element;
 			if (markdownEditor && selector.includes('markdown-source-view')) return {} as Element;
 			if ((closestEditable || matchesEditable) && selector.includes('input, textarea, select')) return {} as Element;
 			if (contenteditable && selector.includes('contenteditable')) return {} as Element;
 			return null;
-		},
-		matches: (selector: string) => {
-			if (isCmContent && selector === '.cm-content') return true;
-			if (isCmEditor && selector === '.cm-editor') return true;
-			if (matchesEditable && selector.includes('input, textarea, select')) return true;
-			if (contenteditable && selector.includes('contenteditable')) return true;
-			return false;
 		},
 	} as unknown as EventTarget;
 }

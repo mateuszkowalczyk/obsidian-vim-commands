@@ -63,7 +63,7 @@ describe('advanceKeySequence', () => {
 		});
 	});
 
-	it('prefers exact matches over longer prefixes', () => {
+	it('keeps exact matches pending when a longer mapping shares the prefix', () => {
 		expect(
 			advanceKeySequence([], 'g', [
 				{
@@ -78,8 +78,8 @@ describe('advanceKeySequence', () => {
 				},
 			]),
 		).toEqual({
-			buffer: [],
-			result: { type: 'matched', commandId: 'single-g' },
+			buffer: ['g'],
+			result: { type: 'pending', commandId: 'single-g' },
 		});
 	});
 });

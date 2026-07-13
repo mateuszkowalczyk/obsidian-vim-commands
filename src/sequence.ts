@@ -2,7 +2,7 @@ import { CommandMapping } from './parser';
 
 export type KeySequenceResult =
 	// Keep the buffer because it is a prefix of at least one mapping.
-	| { type: 'pending' }
+	| { type: 'pending'; commandId?: string }
 	// Execute the mapped command and clear the buffer.
 	| { type: 'matched'; commandId: string }
 	// Clear the buffer because no mapping or prefix matches.
@@ -28,6 +28,18 @@ export function advanceKeySequence(
 	const exactMatch = mappings.find((mapping) =>
 		isSameSequence(mapping.keys, nextBuffer),
 	);
+	const hasLongerPrefixMatch = mappings.some(
+		(mapping) =>
+			mapping.keys.length > nextBuffer.length &&
+			isSequencePrefix(nextBuffer, mapping.keys),
+	);
+
+	if (exactMatch && hasLongerPrefixMatch) {
+		return {
+			buffer: nextBuffer,
+			result: { type: 'pending', commandId: exactMatch.commandId },
+		};
+	}
 
 	if (exactMatch) {
 		return {
@@ -36,11 +48,7 @@ export function advanceKeySequence(
 		};
 	}
 
-	const hasPrefixMatch = mappings.some((mapping) =>
-		isSequencePrefix(nextBuffer, mapping.keys),
-	);
-
-	if (hasPrefixMatch) {
+	if (hasLongerPrefixMatch) {
 		return { buffer: nextBuffer, result: { type: 'pending' } };
 	}
 

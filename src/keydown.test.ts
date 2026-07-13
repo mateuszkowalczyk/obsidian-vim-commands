@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CommandMapping } from './parser';
 import { createKeydownHandler, isTextEntryTarget } from './keydown';
 
@@ -14,6 +14,16 @@ const mappings: CommandMapping[] = [
 		requiresDomFallback: false,
 	},
 ];
+
+beforeEach(() => {
+	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+	vi.stubGlobal('window', { setTimeout, clearTimeout });
+});
+
+afterEach(() => {
+	vi.unstubAllGlobals();
+	vi.useRealTimers();
+});
 
 describe('createKeydownHandler', () => {
 	it('prevents default while a sequence is pending', () => {
@@ -173,6 +183,123 @@ describe('createKeydownHandler', () => {
 	});
 });
 
+describe('createKeydownHandler timeout', () => {
+	it('resets the buffer after the timeout expires', () => {
+		const { handler, onCommand } = setupHandler();
+
+		handler(keydownEvent({ key: ' ' }));
+		vi.advanceTimersByTime(1000);
+		const event = keydownEvent({ key: '/' });
+		handler(event);
+
+		expect(event.preventDefault).not.toHaveBeenCalled();
+		expect(event.stopPropagation).not.toHaveBeenCalled();
+		expect(onCommand).not.toHaveBeenCalled();
+	});
+
+	it('extends the timeout on each pending key', () => {
+		const threeKeyMappings: CommandMapping[] = [
+			{ keys: ['<Space>', 'g', 's'], commandId: 'graph:open', requiresDomFallback: true },
+		];
+		const onCommand = vi.fn();
+		const handler = createKeydownHandler({
+			getMappings: () => threeKeyMappings,
+			isVimInsertModeTarget: () => false,
+			onCommand,
+		});
+
+		handler(keydownEvent({ key: ' ' }));
+		vi.advanceTimersByTime(800);
+		handler(keydownEvent({ key: 'g' }));
+		vi.advanceTimersByTime(800);
+		const event = keydownEvent({ key: 's' });
+		handler(event);
+
+		expect(event.preventDefault).toHaveBeenCalledOnce();
+		expect(event.stopPropagation).toHaveBeenCalledOnce();
+		expect(onCommand).toHaveBeenCalledWith('graph:open');
+	});
+
+	it('executes the shorter mapping when an ambiguous sequence times out', () => {
+		const { handler, onCommand } = setupHandlerWithMappings([
+			{ keys: ['<Space>', 'g'], commandId: 'short', requiresDomFallback: true },
+			{ keys: ['<Space>', 'g', 'g'], commandId: 'long', requiresDomFallback: true },
+		]);
+
+		handler(keydownEvent({ key: ' ' }));
+		handler(keydownEvent({ key: 'g' }));
+		vi.advanceTimersByTime(1000);
+
+		expect(onCommand).toHaveBeenCalledOnce();
+		expect(onCommand).toHaveBeenCalledWith('short');
+	});
+
+	it('executes the longer mapping before an ambiguous sequence times out', () => {
+		const { handler, onCommand } = setupHandlerWithMappings([
+			{ keys: ['<Space>', 'g'], commandId: 'short', requiresDomFallback: true },
+			{ keys: ['<Space>', 'g', 'g'], commandId: 'long', requiresDomFallback: true },
+		]);
+
+		handler(keydownEvent({ key: ' ' }));
+		handler(keydownEvent({ key: 'g' }));
+		vi.advanceTimersByTime(800);
+		handler(keydownEvent({ key: 'g' }));
+		vi.advanceTimersByTime(1000);
+
+		expect(onCommand).toHaveBeenCalledOnce();
+		expect(onCommand).toHaveBeenCalledWith('long');
+	});
+
+	it('cancels an ambiguous sequence timeout when no mapping matches', () => {
+		const { handler, onCommand } = setupHandlerWithMappings([
+			{ keys: ['<Space>', 'g'], commandId: 'short', requiresDomFallback: true },
+			{ keys: ['<Space>', 'g', 'g'], commandId: 'long', requiresDomFallback: true },
+		]);
+
+		handler(keydownEvent({ key: ' ' }));
+		handler(keydownEvent({ key: 'g' }));
+		handler(keydownEvent({ key: 'x' }));
+		vi.advanceTimersByTime(1000);
+
+		expect(onCommand).not.toHaveBeenCalled();
+	});
+
+	it('clears the buffer when focusing a text-entry target', () => {
+		const { handler, onCommand } = setupHandler();
+
+		handler(keydownEvent({ key: ' ' }));
+		const textEvent = keydownEvent({
+			key: 'a',
+			target: target({ matchesEditable: true }),
+		});
+		handler(textEvent);
+		const event = keydownEvent({ key: '/' });
+		handler(event);
+
+		expect(event.preventDefault).not.toHaveBeenCalled();
+		expect(onCommand).not.toHaveBeenCalled();
+	});
+
+	it('clears the buffer when entering Vim insert mode', () => {
+		let inInsertMode = false;
+		const { handler, onCommand } = setupHandler(() => inInsertMode);
+
+		handler(keydownEvent({ key: ' ', target: target({ markdownEditor: true }) }));
+		inInsertMode = true;
+		const insertEvent = keydownEvent({
+			key: 'a',
+			target: target({ markdownEditor: true }),
+		});
+		handler(insertEvent);
+		inInsertMode = false;
+		const event = keydownEvent({ key: '/', target: target({ markdownEditor: true }) });
+		handler(event);
+
+		expect(event.preventDefault).not.toHaveBeenCalled();
+		expect(onCommand).not.toHaveBeenCalled();
+	});
+});
+
 describe('isTextEntryTarget', () => {
 	it('detects text-entry elements', () => {
 		expect(isTextEntryTarget(target({ matchesEditable: true }))).toBe(
@@ -210,9 +337,16 @@ describe('isTextEntryTarget', () => {
 });
 
 function setupHandler(isVimInsertModeTarget = () => false) {
+	return setupHandlerWithMappings(mappings, isVimInsertModeTarget);
+}
+
+function setupHandlerWithMappings(
+	handlerMappings: CommandMapping[],
+	isVimInsertModeTarget = () => false,
+) {
 	const onCommand = vi.fn();
 	const handler = createKeydownHandler({
-		getMappings: () => mappings,
+		getMappings: () => handlerMappings,
 		isVimInsertModeTarget,
 		onCommand,
 	});

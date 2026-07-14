@@ -100,6 +100,7 @@ describe('parseConfiguredLeaderKey', () => {
 describe('expandLeaderKeySequence', () => {
 	it('expands exact <Leader> tokens', () => {
 		expect(expandLeaderKeySequence('<Leader>gg', ',')).toBe(',gg');
+		expect(expandLeaderKeySequence('<leader>gg', ',')).toBe(',gg');
 		expect(expandLeaderKeySequence('<Leader><Leader>', DEFAULT_LEADER_KEY)).toBe(
 			'<Space><Space>',
 		);
@@ -114,6 +115,23 @@ describe('tokenizeKeySequence', () => {
 		]);
 		expect(tokenizeKeySequence('<C-o>')).toEqual(['<C-o>']);
 		expect(tokenizeKeySequence('<A-p>')).toEqual(['<A-p>']);
+		expect(tokenizeKeySequence('<space><cr><C-O><C-Space>')).toEqual([
+			'<Space>',
+			'<CR>',
+			'<C-o>',
+			'<C-Space>',
+		]);
+		expect(tokenizeKeySequence('<C-Enter><A-Left>')).toEqual([
+			'<C-CR>',
+			'<A-Left>',
+		]);
+		expect(tokenizeKeySequence('<A-ArrowLeft>')).toEqual(['<A-ArrowLeft>']);
+		expect(tokenizeKeySequence('<S-h><S-Left><S-A-b><C-S-O>')).toEqual([
+			'H',
+			'<S-Left>',
+			'<A-S-b>',
+			'<C-S-o>',
+		]);
 		expect(tokenizeKeySequence('H/:|-')).toEqual(['H', '/', ':', '|', '-']);
 	});
 });
@@ -181,6 +199,20 @@ describe('parseMappingLines', () => {
 				keys: ['<A-p>'],
 				commandId: 'command-palette:open',
 				requiresDomFallback: false,
+			},
+		]);
+	});
+
+	it('canonicalizes lowercase leader and mixed-case key notation', () => {
+		expect(
+			parseMappingLines([
+				'nmap <leader><C-O> :obcommand<space>command-palette:open<CR>',
+			]),
+		).toEqual([
+			{
+				keys: ['<Space>', '<C-o>'],
+				commandId: 'command-palette:open',
+				requiresDomFallback: true,
 			},
 		]);
 	});

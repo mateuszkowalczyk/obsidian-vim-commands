@@ -28,6 +28,12 @@ describe('normalizeKeyboardEventKey', () => {
 		expect(
 			normalizeKeyboardEventKey(keyEvent({ ctrlKey: true, key: 'I' })),
 		).toBe('<C-i>');
+		expect(
+			normalizeKeyboardEventKey(keyEvent({ ctrlKey: true, key: ' ' })),
+		).toBe('<C-Space>');
+		expect(
+			normalizeKeyboardEventKey(keyEvent({ ctrlKey: true, key: 'Enter' })),
+		).toBe('<C-CR>');
 	});
 
 	it('normalizes alt-key combinations using Vimrc Support notation', () => {
@@ -37,6 +43,29 @@ describe('normalizeKeyboardEventKey', () => {
 		expect(
 			normalizeKeyboardEventKey(keyEvent({ altKey: true, key: 'B' })),
 		).toBe('<A-b>');
+		expect(
+			normalizeKeyboardEventKey(keyEvent({ altKey: true, key: 'ArrowLeft' })),
+		).toBe('<A-Left>');
+	});
+
+	it('distinguishes shifted modifier combinations', () => {
+		expect(
+			normalizeKeyboardEventKey(keyEvent({
+				altKey: true,
+				key: 'B',
+				shiftKey: true,
+			})),
+		).toBe('<A-S-b>');
+		expect(
+			normalizeKeyboardEventKey(keyEvent({
+				ctrlKey: true,
+				key: 'O',
+				shiftKey: true,
+			})),
+		).toBe('<C-S-o>');
+		expect(
+			normalizeKeyboardEventKey(keyEvent({ key: 'ArrowLeft', shiftKey: true })),
+		).toBe('<S-Left>');
 	});
 
 	it('ignores unsupported meta combinations and non-printable keys', () => {
@@ -44,7 +73,7 @@ describe('normalizeKeyboardEventKey', () => {
 			normalizeKeyboardEventKey(keyEvent({ metaKey: true, key: 'o' })),
 		).toBeNull();
 		expect(
-			normalizeKeyboardEventKey(keyEvent({ altKey: true, key: 'ArrowLeft' })),
+			normalizeKeyboardEventKey(keyEvent({ altKey: true, key: 'F1' })),
 		).toBeNull();
 		expect(normalizeKeyboardEventKey(keyEvent({ key: 'ArrowLeft' }))).toBeNull();
 	});
@@ -52,12 +81,13 @@ describe('normalizeKeyboardEventKey', () => {
 
 function keyEvent(
 	overrides: Partial<KeyboardEvent>,
-): Pick<KeyboardEvent, 'altKey' | 'ctrlKey' | 'key' | 'metaKey'> {
+): Pick<KeyboardEvent, 'altKey' | 'ctrlKey' | 'key' | 'metaKey' | 'shiftKey'> {
 	return {
 		altKey: false,
 		ctrlKey: false,
 		key: '',
 		metaKey: false,
+		shiftKey: false,
 		...overrides,
 	};
 }

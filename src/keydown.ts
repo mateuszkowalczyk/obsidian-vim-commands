@@ -8,6 +8,7 @@ type KeydownEventLike = Pick<
 	| 'ctrlKey'
 	| 'key'
 	| 'metaKey'
+	| 'shiftKey'
 	| 'preventDefault'
 	| 'stopPropagation'
 	| 'target'

@@ -489,6 +489,7 @@ function keydownEvent(
 	| 'ctrlKey'
 	| 'key'
 	| 'metaKey'
+	| 'shiftKey'
 	| 'preventDefault'
 	| 'stopPropagation'
 	| 'target'
@@ -498,6 +499,7 @@ function keydownEvent(
 		ctrlKey: false,
 		key: '',
 		metaKey: false,
+		shiftKey: false,
 		preventDefault: vi.fn(),
 		stopPropagation: vi.fn(),
 		target: null,

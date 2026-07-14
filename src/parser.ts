@@ -1,3 +1,5 @@
+import { canonicalizeKeyToken } from './keyTokens';
+
 export interface CommandMapping {
 	keys: string[];
 	commandId: string;
@@ -65,7 +67,7 @@ export function expandLeaderKeySequence(
 	keys: string,
 	leaderKey: string,
 ): string {
-	return keys.replace(/<Leader>/g, leaderKey);
+	return keys.replace(/<leader>/gi, leaderKey);
 }
 
 export function parseMappingLines(
@@ -83,7 +85,7 @@ export function parseMappingLines(
 		const keys = tokenizeKeySequence(
 			expandLeaderKeySequence(mapping.keys, leaderKey),
 		);
-		const usesLeaderSyntax = mapping.keys.startsWith('<Leader>');
+		const usesLeaderSyntax = /^<leader>/i.test(mapping.keys);
 		const startsWithSpace = keys[0] === '<Space>';
 
 		return [
@@ -111,7 +113,7 @@ export function tokenizeKeySequence(keys: string): string[] {
 			const tokenEndIndex = keys.indexOf('>', index + 1);
 
 			if (tokenEndIndex !== -1) {
-				tokens.push(keys.slice(index, tokenEndIndex + 1));
+				tokens.push(canonicalizeKeyToken(keys.slice(index, tokenEndIndex + 1)));
 				index = tokenEndIndex + 1;
 				continue;
 			}

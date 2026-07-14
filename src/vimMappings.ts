@@ -56,6 +56,21 @@ export class VimMappingRegistry {
 		this.registered = true;
 	}
 
+	replace(
+		mappings: CommandMapping[],
+		previousMappings: CommandMapping[],
+		onCommand: (commandId: string) => void,
+	): void {
+		this.clear();
+
+		try {
+			this.sync(mappings, onCommand);
+		} catch (error) {
+			this.sync(previousMappings, onCommand);
+			throw error;
+		}
+	}
+
 	clear(): void {
 		if (!this.vim || !this.registered) {
 			return;
@@ -73,16 +88,24 @@ export function registerVimMappings(
 	mappings: CommandMapping[],
 	onCommand: (commandId: string) => void,
 ): string[] {
-	return mappings.map((mapping, index) => {
-		const actionName = `obsidian-vim-commands-${index}`;
-		const keys = mapping.keys.join('');
+	const registeredKeys: string[] = [];
 
-		vim.defineAction(actionName, () => onCommand(mapping.commandId));
-		// mapCommand inserts ahead of CodeMirror's single-key defaults, preserving prefixes.
-		vim.mapCommand(keys, 'action', actionName, undefined, {});
+	try {
+		for (const [index, mapping] of mappings.entries()) {
+			const actionName = `obsidian-vim-commands-${index}`;
+			const keys = mapping.keys.join('');
 
-		return keys;
-	});
+			vim.defineAction(actionName, () => onCommand(mapping.commandId));
+			// mapCommand inserts ahead of CodeMirror's single-key defaults, preserving prefixes.
+			vim.mapCommand(keys, 'action', actionName, undefined, {});
+			registeredKeys.push(keys);
+		}
+	} catch (error) {
+		unregisterVimMappings(vim, registeredKeys);
+		throw error;
+	}
+
+	return registeredKeys;
 }
 
 export function unregisterVimMappings(

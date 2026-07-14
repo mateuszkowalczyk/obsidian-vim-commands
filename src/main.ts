@@ -53,15 +53,29 @@ export default class VimCommandsPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			(await this.loadData()) as Partial<VimCommandsPluginSettings>,
-		);
+		try {
+			this.settings = Object.assign(
+				{},
+				DEFAULT_SETTINGS,
+				(await this.loadData()) as Partial<VimCommandsPluginSettings>,
+			);
+		} catch (error) {
+			this.settings = { ...DEFAULT_SETTINGS };
+			this.reportError(
+				'Could not load Vim commands settings. Using defaults.',
+				error,
+			);
+		}
 	}
 
-	async saveSettings() {
-		await this.saveData(this.settings);
+	async saveSettings(): Promise<boolean> {
+		try {
+			await this.saveData(this.settings);
+			return true;
+		} catch (error) {
+			this.reportError('Could not save Vim commands settings.', error);
+			return false;
+		}
 	}
 
 	reloadMappingsDebounced(delayMs = 2000) {
@@ -83,29 +97,47 @@ export default class VimCommandsPlugin extends Plugin {
 	}
 
 	async reloadMappings() {
-		this.vimMappings.clear();
-
-		const mappingLines = await loadMappingLines(
-			this.app.vault,
-			this.settings.configFilePath,
-		);
-
-		if (mappingLines === null) {
-			const path = normalizePath(
-				this.settings.configFilePath.trim() || DEFAULT_SETTINGS.configFilePath,
+		try {
+			const mappingLines = await loadMappingLines(
+				this.app.vault,
+				this.settings.configFilePath,
 			);
-			new Notice(`Vim commands config file not found: ${path}`);
-			this.mappings = [];
-			return;
-		}
 
-		this.mappings = parseMappingLines(mappingLines);
-		this.syncVimMappings();
+			if (mappingLines === null) {
+				const path = normalizePath(
+					this.settings.configFilePath.trim() || DEFAULT_SETTINGS.configFilePath,
+				);
+				new Notice(`Vim commands config file not found: ${path}`);
+				return;
+			}
+
+			const mappings = parseMappingLines(mappingLines);
+			this.vimMappings.replace(
+				mappings,
+				this.mappings,
+				(commandId) => executeObsidianCommand(this.app, commandId),
+			);
+			this.mappings = mappings;
+		} catch (error) {
+			this.reportError(
+				'Could not reload Vim commands mappings. Keeping the previous mappings.',
+				error,
+			);
+		}
 	}
 
 	private syncVimMappings() {
-		this.vimMappings.sync(this.mappings, (commandId) =>
-			executeObsidianCommand(this.app, commandId),
-		);
+		try {
+			this.vimMappings.sync(this.mappings, (commandId) =>
+				executeObsidianCommand(this.app, commandId),
+			);
+		} catch (error) {
+			this.reportError('Could not enable Vim commands in the editor.', error);
+		}
+	}
+
+	private reportError(message: string, error: unknown) {
+		console.error(message, error);
+		new Notice(message);
 	}
 }

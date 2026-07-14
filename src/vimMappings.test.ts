@@ -99,6 +99,44 @@ describe('VimMappingRegistry', () => {
 
 		expect(unmap).toHaveBeenCalledWith('gd', 'normal');
 	});
+
+	it('restores previous mappings when a replacement fails', () => {
+		const { vim, mapCommand, unmap } = vimApi();
+		const registry = new VimMappingRegistry(() => vim);
+		const previousMapping = {
+			keys: ['g', 'd'],
+			commandId: 'editor:follow-link',
+			requiresDomFallback: false,
+		};
+		const error = new Error('mapping failed');
+
+		registry.sync([previousMapping], vi.fn());
+		mapCommand.mockImplementation((keys) => {
+			if (keys === 'H') {
+				throw error;
+			}
+		});
+
+		expect(() =>
+			registry.replace(
+				[
+					{
+						keys: ['H'],
+						commandId: 'workspace:previous-tab',
+						requiresDomFallback: false,
+					},
+				],
+				[previousMapping],
+				vi.fn(),
+			),
+		).toThrow(error);
+		expect(mapCommand.mock.calls.map(([keys]) => keys)).toEqual([
+			'gd',
+			'H',
+			'gd',
+		]);
+		expect(unmap).toHaveBeenCalledWith('gd', 'normal');
+	});
 });
 
 function vimApi() {

@@ -39,6 +39,16 @@ describe('loadMappingLines', () => {
 
 		expect(exists).toHaveBeenCalledWith(DEFAULT_CONFIG_FILE_PATH);
 	});
+
+	it('propagates adapter failures to the reload boundary', async () => {
+		const error = new Error('vault unavailable');
+		const vault = vaultWithAdapter({
+			exists: vi.fn().mockRejectedValue(error),
+			read: vi.fn(),
+		});
+
+		await expect(loadMappingLines(vault, '.vimrc')).rejects.toBe(error);
+	});
 });
 
 function vaultWithAdapter(adapter: unknown): Vault {

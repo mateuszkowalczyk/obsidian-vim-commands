@@ -79,8 +79,15 @@ export class VimCommandsSettingTab extends PluginSettingTab {
 				.setPlaceholder(DEFAULT_CONFIG_FILE_PATH)
 				.setValue(this.plugin.settings.configFilePath)
 				.onChange(async (value) => {
+					const previousValue = this.plugin.settings.configFilePath;
 					this.plugin.settings.configFilePath = value;
-					await this.plugin.saveSettings();
+
+					if (!(await this.plugin.saveSettings())) {
+						this.plugin.settings.configFilePath = previousValue;
+						text.setValue(previousValue);
+						return;
+					}
+
 					this.plugin.reloadMappingsDebounced();
 				}),
 		);

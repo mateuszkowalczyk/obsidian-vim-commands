@@ -234,6 +234,72 @@ describe('createKeydownHandler timeout', () => {
 		expect(onCommand).toHaveBeenCalledWith('short');
 	});
 
+	it('does not execute a pending mapping after the handler is cancelled', () => {
+		const { handler, onCommand } = setupHandlerWithMappings([
+			{ keys: ['g'], commandId: 'short', requiresDomFallback: false },
+			{ keys: ['g', 'g'], commandId: 'long', requiresDomFallback: false },
+		]);
+
+		handler(keydownEvent({ key: 'g' }));
+		handler.cancel();
+		vi.advanceTimersByTime(1000);
+
+		expect(onCommand).not.toHaveBeenCalled();
+	});
+
+	it('does not execute a pending mapping after focus changes', () => {
+		const { handler, onCommand } = setupHandlerWithMappings([
+			{ keys: ['g'], commandId: 'short', requiresDomFallback: false },
+			{ keys: ['g', 'g'], commandId: 'long', requiresDomFallback: false },
+		]);
+		const initialTarget = target();
+		const ownerDocument = { activeElement: initialTarget };
+		Object.assign(initialTarget, { ownerDocument });
+
+		handler(keydownEvent({ key: 'g', target: initialTarget }));
+		ownerDocument.activeElement = target();
+		vi.advanceTimersByTime(1000);
+
+		expect(onCommand).not.toHaveBeenCalled();
+	});
+
+	it('does not execute a pending mapping after entering Vim insert mode', () => {
+		let inInsertMode = false;
+		const { handler, onCommand } = setupHandlerWithMappings(
+			[
+				{ keys: ['g'], commandId: 'short', requiresDomFallback: true },
+				{ keys: ['g', 'g'], commandId: 'long', requiresDomFallback: true },
+			],
+			() => inInsertMode,
+		);
+		const editorTarget = target({ markdownEditor: true });
+
+		handler(keydownEvent({ key: 'g', target: editorTarget }));
+		inInsertMode = true;
+		vi.advanceTimersByTime(1000);
+
+		expect(onCommand).not.toHaveBeenCalled();
+	});
+
+	it('does not execute a pending mapping after it is removed', () => {
+		let currentMappings: CommandMapping[] = [
+			{ keys: ['g'], commandId: 'short', requiresDomFallback: false },
+			{ keys: ['g', 'g'], commandId: 'long', requiresDomFallback: false },
+		];
+		const onCommand = vi.fn();
+		const handler = createKeydownHandler({
+			getMappings: () => currentMappings,
+			isVimInsertModeTarget: () => false,
+			onCommand,
+		});
+
+		handler(keydownEvent({ key: 'g' }));
+		currentMappings = [];
+		vi.advanceTimersByTime(1000);
+
+		expect(onCommand).not.toHaveBeenCalled();
+	});
+
 	it('executes the longer mapping before an ambiguous sequence times out', () => {
 		const { handler, onCommand } = setupHandlerWithMappings([
 			{ keys: ['<Space>', 'g'], commandId: 'short', requiresDomFallback: true },

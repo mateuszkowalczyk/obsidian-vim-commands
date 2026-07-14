@@ -22,17 +22,19 @@ export default class VimCommandsPlugin extends Plugin {
 		await this.loadSettings();
 		await this.reloadMappings();
 
+		const keydownHandler = createKeydownHandler({
+			getMappings: () => this.mappings,
+			isVimInsertModeTarget: (target) =>
+				isVimInsertModeTarget(this.app, target),
+			onCommand: (commandId) => {
+				executeObsidianCommand(this.app, commandId);
+			},
+		});
+		this.register(() => keydownHandler.cancel());
 		this.registerDomEvent(
 			window,
 			'keydown',
-			createKeydownHandler({
-				getMappings: () => this.mappings,
-				isVimInsertModeTarget: (target) =>
-					isVimInsertModeTarget(this.app, target),
-				onCommand: (commandId) => {
-					executeObsidianCommand(this.app, commandId);
-				},
-			}),
+			keydownHandler,
 			{ capture: true },
 		);
 

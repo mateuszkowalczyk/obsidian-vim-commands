@@ -19,6 +19,11 @@ interface KeydownHandlerOptions {
 	onCommand: (commandId: string) => void;
 }
 
+export interface KeydownHandler {
+	(event: KeydownEventLike): void;
+	cancel(): void;
+}
+
 const FORM_ENTRY_SELECTOR = 'input, textarea, select';
 const CONTENT_EDITABLE_SELECTOR =
 	'[contenteditable]:not([contenteditable="false"])';
@@ -31,37 +36,68 @@ export function createKeydownHandler({
 	getMappings,
 	isVimInsertModeTarget,
 	onCommand,
-}: KeydownHandlerOptions): (event: KeydownEventLike) => void {
+}: KeydownHandlerOptions): KeydownHandler {
 	let buffer: string[] = [];
 	let timeoutId: number | null = null;
-	let pendingCommandId: string | null = null;
+	let disposed = false;
 
 	function clearBuffer() {
 		buffer = [];
-		pendingCommandId = null;
 		if (timeoutId !== null) {
 			window.clearTimeout(timeoutId);
 			timeoutId = null;
 		}
 	}
 
-	function startTimeout(commandId?: string) {
+	function startTimeout(commandId: string | undefined, target: EventTarget | null) {
 		if (timeoutId !== null) {
 			window.clearTimeout(timeoutId);
 		}
-		pendingCommandId = commandId ?? null;
+		const pendingKeys = [...buffer];
 		timeoutId = window.setTimeout(() => {
-			const commandId = pendingCommandId;
 			timeoutId = null;
 			buffer = [];
-			pendingCommandId = null;
-			if (commandId !== null) {
+			if (
+				commandId !== undefined &&
+				!disposed &&
+				isTimeoutContextValid(target, pendingKeys, commandId)
+			) {
 				onCommand(commandId);
 			}
 		}, SEQUENCE_TIMEOUT_MS);
 	}
 
-	return (event) => {
+	function isTimeoutContextValid(
+		target: EventTarget | null,
+		pendingKeys: string[],
+		commandId: string,
+	): boolean {
+		if (!isStillActiveTarget(target) || isTextEntryTarget(target)) {
+			return false;
+		}
+
+		const markdownEditorTarget = isMarkdownEditorTarget(target);
+		if (markdownEditorTarget && isVimInsertModeTarget(target)) {
+			return false;
+		}
+
+		const mappings = markdownEditorTarget
+			? getMappings().filter((mapping) => mapping.requiresDomFallback)
+			: getMappings();
+
+		return mappings.some(
+			(mapping) =>
+				mapping.commandId === commandId &&
+				mapping.keys.length === pendingKeys.length &&
+				mapping.keys.every((key, index) => key === pendingKeys[index]),
+		);
+	}
+
+	const handler: KeydownHandler = (event) => {
+		if (disposed) {
+			return;
+		}
+
 		if (isTextEntryTarget(event.target)) {
 			clearBuffer();
 			return;
@@ -93,7 +129,7 @@ export function createKeydownHandler({
 		buffer = state.buffer;
 
 		if (state.result.type === 'pending') {
-			startTimeout(state.result.commandId);
+			startTimeout(state.result.commandId, event.target);
 			event.preventDefault();
 			event.stopPropagation();
 			return;
@@ -115,6 +151,13 @@ export function createKeydownHandler({
 
 		clearBuffer();
 	};
+
+	handler.cancel = () => {
+		disposed = true;
+		clearBuffer();
+	};
+
+	return handler;
 }
 
 export function isTextEntryTarget(target: EventTarget | null): boolean {
@@ -143,4 +186,14 @@ function isEditableTarget(element: ElementLike): boolean {
 interface ElementLike {
 	closest?: (selector: string) => ElementLike | null;
 	matches?: (selector: string) => boolean;
+	ownerDocument?: Pick<Document, 'activeElement'>;
+}
+
+function isStillActiveTarget(target: EventTarget | null): boolean {
+	if (!target || typeof target !== 'object') {
+		return true;
+	}
+
+	const ownerDocument = (target as ElementLike).ownerDocument;
+	return ownerDocument === undefined || ownerDocument.activeElement === target;
 }

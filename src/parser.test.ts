@@ -216,4 +216,41 @@ describe('parseMappingLines', () => {
 			},
 		]);
 	});
+
+	it('uses the last declaration when mappings have the same keys', () => {
+		expect(
+			parseMappingLines([
+				'nmap gd :obcommand<space>editor:first<CR>',
+				'nmap H :obcommand<space>workspace:previous-tab<CR>',
+				'nmap gd :obcommand<space>editor:last<CR>',
+			]),
+		).toEqual([
+			{
+				keys: ['H'],
+				commandId: 'workspace:previous-tab',
+				requiresDomFallback: false,
+			},
+			{
+				keys: ['g', 'd'],
+				commandId: 'editor:last',
+				requiresDomFallback: false,
+			},
+		]);
+	});
+
+	it('deduplicates mappings after leader expansion and canonicalization', () => {
+		expect(
+			parseMappingLines([
+				'let mapleader = ","',
+				'nmap <Leader><C-O> :obcommand<space>command:first<CR>',
+				'nmap ,<C-o> :obcommand<space>command:last<CR>',
+			]),
+		).toEqual([
+			{
+				keys: [',', '<C-o>'],
+				commandId: 'command:last',
+				requiresDomFallback: false,
+			},
+		]);
+	});
 });

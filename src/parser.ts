@@ -75,7 +75,7 @@ export function parseMappingLines(
 ): CommandMapping[] {
 	const leaderKey = parseConfiguredLeaderKey(lines);
 
-	return lines.flatMap((line) => {
+	const mappings = lines.flatMap((line) => {
 		const mapping = parseNmapObcommandLine(line);
 
 		if (mapping === null) {
@@ -96,6 +96,15 @@ export function parseMappingLines(
 			},
 		];
 	});
+	const mappingsByKeys = new Map<string, CommandMapping>();
+
+	for (const mapping of mappings) {
+		const key = JSON.stringify(mapping.keys);
+		mappingsByKeys.delete(key);
+		mappingsByKeys.set(key, mapping);
+	}
+
+	return [...mappingsByKeys.values()];
 }
 
 export function tokenizeKeySequence(keys: string): string[] {

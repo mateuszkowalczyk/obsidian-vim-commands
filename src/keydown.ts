@@ -30,6 +30,7 @@ const CONTENT_EDITABLE_SELECTOR =
 const CODEMIRROR_CONTENT_SELECTOR = '.cm-content';
 const CODEMIRROR_EDITOR_SELECTOR = '.cm-editor';
 const MARKDOWN_EDITOR_SELECTOR = '.markdown-source-view';
+const MODIFIER_KEYS = new Set(['Alt', 'AltGraph', 'Control', 'Meta', 'Shift']);
 
 const SEQUENCE_TIMEOUT_MS = 1000;
 
@@ -123,6 +124,9 @@ export function createKeydownHandler({
 		const key = normalizeKeyboardEventKey(event);
 
 		if (key === null) {
+			if (!MODIFIER_KEYS.has(event.key)) {
+				clearBuffer();
+			}
 			return;
 		}
 

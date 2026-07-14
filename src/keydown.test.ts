@@ -100,6 +100,32 @@ describe('createKeydownHandler', () => {
 		expect(onCommand).not.toHaveBeenCalled();
 	});
 
+	it('keeps a pending sequence active across standalone modifiers', () => {
+		const { handler, onCommand } = setupHandler();
+
+		handler(keydownEvent({ key: ' ' }));
+		const modifierEvent = keydownEvent({ ctrlKey: true, key: 'Control' });
+		handler(modifierEvent);
+		handler(keydownEvent({ key: '/' }));
+
+		expect(modifierEvent.preventDefault).not.toHaveBeenCalled();
+		expect(modifierEvent.stopPropagation).not.toHaveBeenCalled();
+		expect(onCommand).toHaveBeenCalledWith('global-search:open');
+	});
+
+	it('clears a pending sequence on unsupported substantive input', () => {
+		const { handler, onCommand } = setupHandler();
+
+		handler(keydownEvent({ key: ' ' }));
+		const arrowEvent = keydownEvent({ key: 'ArrowLeft' });
+		handler(arrowEvent);
+		handler(keydownEvent({ key: '/' }));
+
+		expect(arrowEvent.preventDefault).not.toHaveBeenCalled();
+		expect(arrowEvent.stopPropagation).not.toHaveBeenCalled();
+		expect(onCommand).not.toHaveBeenCalled();
+	});
+
 	it('ignores text-entry targets', () => {
 		const { handler, onCommand } = setupHandler();
 		const event = keydownEvent({
@@ -246,6 +272,19 @@ describe('createKeydownHandler timeout', () => {
 
 		expect(onCommand).toHaveBeenCalledOnce();
 		expect(onCommand).toHaveBeenCalledWith('short');
+	});
+
+	it('cancels an ambiguous timeout on unsupported substantive input', () => {
+		const { handler, onCommand } = setupHandlerWithMappings([
+			{ keys: ['g'], commandId: 'short', requiresDomFallback: false },
+			{ keys: ['g', 'g'], commandId: 'long', requiresDomFallback: false },
+		]);
+
+		handler(keydownEvent({ key: 'g' }));
+		handler(keydownEvent({ key: 'Dead' }));
+		vi.advanceTimersByTime(1000);
+
+		expect(onCommand).not.toHaveBeenCalled();
 	});
 
 	it('does not execute a pending mapping after the handler is cancelled', () => {

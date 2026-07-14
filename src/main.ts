@@ -1,9 +1,16 @@
 import { normalizePath, Notice, Plugin } from 'obsidian';
 import { createKeydownHandler } from './keydown';
-import { loadMappingLines } from './mappings';
+import {
+	ConfigPathOutsideVaultError,
+	loadMappingLines,
+} from './mappings';
 import { executeObsidianCommand } from './obsidianCommands';
 import { isVimInsertModeTarget } from './obsidianVim';
-import { CommandMapping, parseMappingLines } from './parser';
+import {
+	CommandMapping,
+	MappingConfigError,
+	parseMappingLines,
+} from './parser';
 import {
 	DEFAULT_SETTINGS,
 	VimCommandsPluginSettings,
@@ -119,6 +126,14 @@ export default class VimCommandsPlugin extends Plugin {
 			);
 			this.mappings = mappings;
 		} catch (error) {
+			if (
+				error instanceof ConfigPathOutsideVaultError ||
+				error instanceof MappingConfigError
+			) {
+				this.reportError(error.message, error);
+				return;
+			}
+
 			this.reportError(
 				'Could not reload Vim commands mappings. Keeping the previous mappings.',
 				error,

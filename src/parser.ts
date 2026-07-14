@@ -13,6 +13,13 @@ export interface RawCommandMapping {
 
 export const DEFAULT_LEADER_KEY = '<Space>';
 
+export class MappingConfigError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = 'MappingConfigError';
+	}
+}
+
 export function parseNmapObcommandLine(
 	line: string,
 ): RawCommandMapping | null {
@@ -73,6 +80,7 @@ export function expandLeaderKeySequence(
 export function parseMappingLines(
 	lines: string[],
 ): CommandMapping[] {
+	validatePluginConfigLines(lines);
 	const leaderKey = parseConfiguredLeaderKey(lines);
 
 	const mappings = lines.flatMap((line) => {
@@ -105,6 +113,28 @@ export function parseMappingLines(
 	}
 
 	return [...mappingsByKeys.values()];
+}
+
+function validatePluginConfigLines(lines: string[]): void {
+	for (const [index, line] of lines.entries()) {
+		const trimmedLine = line.trim();
+
+		if (/^let\s+mapleader\b/i.test(trimmedLine) && parseMapleaderLine(trimmedLine) === null) {
+			throw new MappingConfigError(
+				`Invalid mapleader assignment on line ${index + 1}.`,
+			);
+		}
+
+		if (
+			/^nmap\b/i.test(trimmedLine) &&
+			/:obcommand\b/i.test(trimmedLine) &&
+			parseNmapObcommandLine(trimmedLine) === null
+		) {
+			throw new MappingConfigError(
+				`Invalid Vim command mapping on line ${index + 1}.`,
+			);
+		}
+	}
 }
 
 export function tokenizeKeySequence(keys: string): string[] {

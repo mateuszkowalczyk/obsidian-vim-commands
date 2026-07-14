@@ -253,4 +253,27 @@ describe('parseMappingLines', () => {
 			},
 		]);
 	});
+
+	it('reports malformed plugin mappings with their line number', () => {
+		expect(() =>
+			parseMappingLines([
+				'set tabstop=4',
+				'nmap H :obcommand workspace:previous-tab<cr>',
+			]),
+		).toThrow('Invalid Vim command mapping on line 2.');
+	});
+
+	it('reports malformed mapleader assignments with their line number', () => {
+		expect(() =>
+			parseMappingLines([
+				'" Vim commands',
+				'let mapleader = ","',
+				"let mapleader = ','",
+			]),
+		).toThrow('Invalid mapleader assignment on line 3.');
+	});
+
+	it('continues to ignore unrelated Vim mappings', () => {
+		expect(parseMappingLines(['nmap j gj', 'set tabstop=4'])).toEqual([]);
+	});
 });

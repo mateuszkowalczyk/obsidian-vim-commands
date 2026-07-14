@@ -68,6 +68,43 @@ describe('VimCommandsPlugin failure handling', () => {
 			'Could not reload Vim commands mappings. Keeping the previous mappings.',
 		);
 	});
+
+	it('reports when the config path escapes the vault without reading it', async () => {
+		const plugin = createPlugin();
+		const exists = vi.fn();
+		const read = vi.fn();
+		plugin.settings = { configFilePath: '../obsidian.vimrc' };
+		plugin.app = {
+			vault: vaultWithAdapter({ exists, read }),
+		} as VimCommandsPlugin['app'];
+
+		await expect(plugin.reloadMappings()).resolves.toBeUndefined();
+
+		expect(mocks.notice).toHaveBeenCalledWith(
+			'Config file path must stay within the vault.',
+		);
+		expect(exists).not.toHaveBeenCalled();
+		expect(read).not.toHaveBeenCalled();
+	});
+
+	it('reports malformed config lines with their line number', async () => {
+		const plugin = createPlugin();
+		plugin.settings = { configFilePath: '.vimrc' };
+		plugin.app = {
+			vault: vaultWithAdapter({
+				exists: vi.fn().mockResolvedValue(true),
+				read: vi.fn().mockResolvedValue(
+					'set tabstop=4\nnmap H :obcommand workspace:previous-tab<cr>',
+				),
+			}),
+		} as VimCommandsPlugin['app'];
+
+		await expect(plugin.reloadMappings()).resolves.toBeUndefined();
+
+		expect(mocks.notice).toHaveBeenCalledWith(
+			'Invalid Vim command mapping on line 2.',
+		);
+	});
 });
 
 function createPlugin(): VimCommandsPlugin {

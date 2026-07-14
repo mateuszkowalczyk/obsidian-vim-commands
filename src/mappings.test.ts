@@ -40,6 +40,37 @@ describe('loadMappingLines', () => {
 		expect(exists).toHaveBeenCalledWith(DEFAULT_CONFIG_FILE_PATH);
 	});
 
+	it.each([
+		'/tmp/vimrc',
+		'\\\\server\\share\\vimrc',
+		'C:\\Users\\user\\vimrc',
+		'../vimrc',
+		'config/../../vimrc',
+		'config\\..\\vimrc',
+	])('rejects paths outside the vault: %s', async (path) => {
+		const exists = vi.fn();
+		const read = vi.fn();
+		const vault = vaultWithAdapter({ exists, read });
+
+		await expect(loadMappingLines(vault, path)).rejects.toThrow(
+			'Config file path must stay within the vault.',
+		);
+		expect(exists).not.toHaveBeenCalled();
+		expect(read).not.toHaveBeenCalled();
+	});
+
+	it('allows filenames containing two dots', async () => {
+		const exists = vi.fn().mockResolvedValue(false);
+		const vault = vaultWithAdapter({
+			exists,
+			read: vi.fn(),
+		});
+
+		await loadMappingLines(vault, 'config/vim..rc');
+
+		expect(exists).toHaveBeenCalledWith('config/vim..rc');
+	});
+
 	it('propagates adapter failures to the reload boundary', async () => {
 		const error = new Error('vault unavailable');
 		const vault = vaultWithAdapter({

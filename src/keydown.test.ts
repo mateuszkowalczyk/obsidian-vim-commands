@@ -169,6 +169,20 @@ describe('createKeydownHandler', () => {
 		expect(onCommand).toHaveBeenCalledWith('global-search:open');
 	});
 
+	it('ignores CodeMirror editors outside Markdown views', () => {
+		const { handler, onCommand } = setupHandler();
+		const codeMirrorTarget = target({ isCmContent: true });
+		const leaderEvent = keydownEvent({ key: ' ', target: codeMirrorTarget });
+		const commandEvent = keydownEvent({ key: '/', target: codeMirrorTarget });
+
+		handler(leaderEvent);
+		handler(commandEvent);
+
+		expect(leaderEvent.preventDefault).not.toHaveBeenCalled();
+		expect(commandEvent.preventDefault).not.toHaveBeenCalled();
+		expect(onCommand).not.toHaveBeenCalled();
+	});
+
 	it('ignores leader mappings inside a Markdown editor in Vim insert mode', () => {
 		const { handler, onCommand } = setupHandler(() => true);
 		const event = keydownEvent({
@@ -385,12 +399,20 @@ describe('isTextEntryTarget', () => {
 		expect(isTextEntryTarget(target({ markdownEditor: true }))).toBe(false);
 	});
 
-	it('does not treat the CodeMirror editor as an editable target', () => {
-		expect(isTextEntryTarget(target({ isCmEditor: true }))).toBe(false);
+	it('treats a CodeMirror editor outside a Markdown view as editable', () => {
+		expect(isTextEntryTarget(target({ isCmEditor: true }))).toBe(true);
 	});
 
-	it('does not treat the CodeMirror content area as an editable target', () => {
-		expect(isTextEntryTarget(target({ isCmContent: true }))).toBe(false);
+	it('treats CodeMirror content outside a Markdown view as editable', () => {
+		expect(isTextEntryTarget(target({ isCmContent: true }))).toBe(true);
+	});
+
+	it('does not treat Markdown CodeMirror content as an editable target', () => {
+		expect(
+			isTextEntryTarget(
+				target({ isCmContent: true, markdownEditor: true }),
+			),
+		).toBe(false);
 	});
 
 	it('treats an input inside the CodeMirror editor as an editable target', () => {
@@ -464,7 +486,7 @@ function target({
 			if (isCmContent && selector.includes('contenteditable')) {
 				return { matches: (s: string) => s === '.cm-content' };
 			}
-			if (isCmContent && (selector.includes('markdown-source-view') || selector.includes('.cm-editor'))) return {} as Element;
+			if (isCmContent && selector === '.cm-editor') return {} as Element;
 			if (isCmEditor && selector.includes('.cm-editor')) return {} as Element;
 			if (markdownEditor && selector.includes('markdown-source-view')) return {} as Element;
 			if ((closestEditable || matchesEditable) && selector.includes('input, textarea, select')) return {} as Element;

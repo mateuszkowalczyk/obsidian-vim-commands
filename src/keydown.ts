@@ -28,7 +28,8 @@ const FORM_ENTRY_SELECTOR = 'input, textarea, select';
 const CONTENT_EDITABLE_SELECTOR =
 	'[contenteditable]:not([contenteditable="false"])';
 const CODEMIRROR_CONTENT_SELECTOR = '.cm-content';
-const MARKDOWN_EDITOR_SELECTOR = '.markdown-source-view, .cm-editor';
+const CODEMIRROR_EDITOR_SELECTOR = '.cm-editor';
+const MARKDOWN_EDITOR_SELECTOR = '.markdown-source-view';
 
 const SEQUENCE_TIMEOUT_MS = 1000;
 
@@ -180,7 +181,17 @@ function isEditableTarget(element: ElementLike): boolean {
 	const editable = element.closest?.(
 		`${FORM_ENTRY_SELECTOR}, ${CONTENT_EDITABLE_SELECTOR}`,
 	);
-	return editable != null && !editable.matches?.(CODEMIRROR_CONTENT_SELECTOR);
+	if (editable != null) {
+		return !(
+			editable.matches?.(CODEMIRROR_CONTENT_SELECTOR) &&
+			isMarkdownEditorTarget(element as EventTarget)
+		);
+	}
+
+	return Boolean(
+		element.closest?.(CODEMIRROR_EDITOR_SELECTOR) &&
+			!isMarkdownEditorTarget(element as EventTarget),
+	);
 }
 
 interface ElementLike {

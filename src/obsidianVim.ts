@@ -5,19 +5,22 @@ interface VimState {
 	insertMode?: boolean;
 }
 
-interface AppWithActiveLeaf {
-	workspace: {
-		activeLeaf?: {
-			view?: {
-				editMode?: {
-					editor?: {
-						cm?: {
-							cm?: { state?: { vim?: VimState | null } };
-						};
-					};
-				};
+interface MarkdownViewLike {
+	containerEl?: {
+		contains?: (element: Element) => boolean;
+	};
+	editMode?: {
+		editor?: {
+			cm?: {
+				cm?: { state?: { vim?: VimState | null } };
 			};
-		} | null;
+		};
+	};
+}
+
+interface AppWithMarkdownLeaves {
+	workspace: {
+		getLeavesOfType?: (viewType: string) => Array<{ view?: MarkdownViewLike }>;
 	};
 }
 
@@ -29,6 +32,20 @@ export function isVimInsertModeTarget(
 		return false;
 	}
 
-	const view = (app as unknown as AppWithActiveLeaf).workspace.activeLeaf?.view;
-	return view?.editMode?.editor?.cm?.cm?.state?.vim?.insertMode === true;
+	const editorElement = (target as Element).closest('.markdown-source-view');
+	if (editorElement === null) {
+		return true;
+	}
+
+	const leaves = (app as unknown as AppWithMarkdownLeaves).workspace
+		.getLeavesOfType?.('markdown') ?? [];
+	const view = leaves
+		.map((leaf) => leaf.view)
+		.find((candidate) =>
+			candidate?.containerEl?.contains?.(editorElement) === true,
+		);
+	const insertMode = view?.editMode?.editor?.cm?.cm?.state?.vim?.insertMode;
+
+	// Unknown ownership or private Vim state must not intercept editor typing.
+	return insertMode ?? true;
 }

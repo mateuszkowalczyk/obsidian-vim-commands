@@ -3,7 +3,7 @@
 	"name": "Vim Commands",
 	"version": "1.0.0",
 	"minAppVersion": "1.12.0",
-	"description": "Trigger Obsidian commands anywhere in the app from vim key sequences defined in a vimrc-style config file.",
+	"description": "Map any Obsidian command to Vim-style multi-key sequences that work everywhere, not only in the editor.",
 	"author": "Mateusz Kowalczyk",
 	"isDesktopOnly": true
 }

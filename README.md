@@ -17,7 +17,7 @@ This plugin extends Obsidian's built-in Vim mode; it does not replace it. Enable
 1. Enable **Settings → Editor → Vim key bindings**.
 2. Install and enable **Vim Commands**.
 3. Create `.vimrc` in the root of your vault.
-4. Add mappings using this form ([[#Config examples|examples below]]):
+4. Add mappings using this form ([examples below](#config-examples)):
 
 ```vim
 nmap <keys> :obcommand <command-id><CR>
@@ -60,7 +60,3 @@ nmap L :obcommand workspace:next-tab<CR>
 " Commands from community plugins work too
 nmap <Leader>gg :obcommand obsidian-git:open-git-view<CR>
 ```
-
-## License
-
-[MIT](./LICENSE) © 2026 Mateusz Kowalczyk

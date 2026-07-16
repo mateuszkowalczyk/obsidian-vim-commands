@@ -3,7 +3,7 @@
 Bring Vim-style command mappings to all of Obsidian:
 
 - Map multi-key sequences, leaders, and modified keys to any Obsidian command.
-- Use mappings across tabs, sidebars, search, and other app views, not only the editor.
+- Use mappings across tabs, sidebars, and other app views, not only the editor.
 - Keep mappings in a vault-local, vimrc-style config file.
 
 Vim Commands works with core commands and commands added by community plugins (everything you can find in command palette).

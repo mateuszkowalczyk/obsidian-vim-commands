@@ -10,10 +10,17 @@ export interface CodeMirrorVim {
 		type: 'action',
 		name: string,
 		actionArgs: undefined,
-		extra: Record<string, never>,
+		extra: { context: 'normal' },
 	): void;
 	unmap(keys: string, context: 'normal'): void;
 }
+
+export interface VimMappingRegistration {
+	keys: string;
+	actionName: string;
+}
+
+const NOOP_ACTION = () => {};
 
 declare global {
 	interface Window {
@@ -29,7 +36,7 @@ export function getCodeMirrorVim(): CodeMirrorVim | null {
 
 export class VimMappingRegistry {
 	private vim: CodeMirrorVim | null = null;
-	private mappingKeys: string[] = [];
+	private registrations: VimMappingRegistration[] = [];
 	private registered = false;
 
 	constructor(
@@ -48,7 +55,7 @@ export class VimMappingRegistry {
 
 		this.clear();
 		this.vim = vim;
-		this.mappingKeys = registerVimMappings(
+		this.registrations = registerVimMappings(
 			vim,
 			mappings.filter((mapping) => !mapping.requiresDomFallback),
 			onCommand,
@@ -76,9 +83,9 @@ export class VimMappingRegistry {
 			return;
 		}
 
-		unregisterVimMappings(this.vim, this.mappingKeys);
+		unregisterVimMappings(this.vim, this.registrations);
 		this.vim = null;
-		this.mappingKeys = [];
+		this.registrations = [];
 		this.registered = false;
 	}
 }
@@ -87,8 +94,8 @@ export function registerVimMappings(
 	vim: CodeMirrorVim,
 	mappings: CommandMapping[],
 	onCommand: (commandId: string) => void,
-): string[] {
-	const registeredKeys: string[] = [];
+): VimMappingRegistration[] {
+	const registrations: VimMappingRegistration[] = [];
 
 	try {
 		for (const [index, mapping] of mappings.entries()) {
@@ -97,22 +104,29 @@ export function registerVimMappings(
 
 			vim.defineAction(actionName, () => onCommand(mapping.commandId));
 			// mapCommand inserts ahead of CodeMirror's single-key defaults, preserving prefixes.
-			vim.mapCommand(keys, 'action', actionName, undefined, {});
-			registeredKeys.push(keys);
+			vim.mapCommand(keys, 'action', actionName, undefined, {
+				context: 'normal',
+			});
+			registrations.push({ keys, actionName });
 		}
 	} catch (error) {
-		unregisterVimMappings(vim, registeredKeys);
+		unregisterVimMappings(vim, registrations);
 		throw error;
 	}
 
-	return registeredKeys;
+	return registrations;
 }
 
 export function unregisterVimMappings(
 	vim: CodeMirrorVim,
-	keys: string[],
+	registrations: VimMappingRegistration[],
 ): void {
-	for (const keySequence of keys) {
-		vim.unmap(keySequence, 'normal');
+	for (const { actionName } of registrations) {
+		vim.defineAction(actionName, NOOP_ACTION);
+	}
+
+	// CodeMirror prepends mappings, so unwind ours in the opposite order.
+	for (const { keys } of [...registrations].reverse()) {
+		vim.unmap(keys, 'normal');
 	}
 }

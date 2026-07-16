@@ -13,7 +13,7 @@ describe('registerVimMappings', () => {
 		const { vim, defineAction, mapCommand } = vimApi();
 		const onCommand = vi.fn();
 
-		const keys = registerVimMappings(
+		const registrations = registerVimMappings(
 			vim,
 			[
 				{
@@ -30,14 +30,17 @@ describe('registerVimMappings', () => {
 			onCommand,
 		);
 
-		expect(keys).toEqual(['gd', '<Space>gg']);
+		expect(registrations).toEqual([
+			{ keys: 'gd', actionName: 'obsidian-vim-commands-0' },
+			{ keys: '<Space>gg', actionName: 'obsidian-vim-commands-1' },
+		]);
 		expect(mapCommand).toHaveBeenNthCalledWith(
 			1,
 			'gd',
 			'action',
 			'obsidian-vim-commands-0',
 			undefined,
-			{},
+			{ context: 'normal' },
 		);
 		expect(mapCommand).toHaveBeenNthCalledWith(
 			2,
@@ -45,7 +48,7 @@ describe('registerVimMappings', () => {
 			'action',
 			'obsidian-vim-commands-1',
 			undefined,
-			{},
+			{ context: 'normal' },
 		);
 
 		const action = defineAction.mock.calls[0]?.[1];
@@ -55,13 +58,63 @@ describe('registerVimMappings', () => {
 });
 
 describe('unregisterVimMappings', () => {
-	it('removes only the recorded normal-mode mappings', () => {
-		const { vim, unmap } = vimApi();
+	it('detaches callbacks and removes mappings in reverse registration order', () => {
+		const { vim, defineAction, unmap } = vimApi();
 
-		unregisterVimMappings(vim, ['gd', '<Space>gg']);
+		unregisterVimMappings(vim, [
+			{ keys: 'gd', actionName: 'obsidian-vim-commands-0' },
+			{ keys: '<Space>gg', actionName: 'obsidian-vim-commands-1' },
+		]);
 
-		expect(unmap).toHaveBeenCalledWith('gd', 'normal');
-		expect(unmap).toHaveBeenCalledWith('<Space>gg', 'normal');
+		expect(defineAction).toHaveBeenCalledTimes(2);
+		expect(unmap.mock.calls).toEqual([
+			['<Space>gg', 'normal'],
+			['gd', 'normal'],
+		]);
+	});
+
+	it('restores a pre-existing normal-mode mapping', () => {
+		const mappings = [
+			{ keys: 'gd', context: 'normal', owner: 'other-plugin' },
+		];
+		const { vim } = vimApi({ mappings });
+
+		const registrations = registerVimMappings(vim, [
+			{
+				keys: ['g', 'd'],
+				commandId: 'editor:follow-link',
+				requiresDomFallback: false,
+			},
+		], vi.fn());
+		unregisterVimMappings(vim, registrations);
+
+		expect(mappings).toEqual([
+			{ keys: 'gd', context: 'normal', owner: 'other-plugin' },
+		]);
+	});
+
+	it('releases command callbacks when mappings are removed', () => {
+		const { vim, actions } = vimApi();
+		const onCommand = vi.fn();
+		const registrations = registerVimMappings(vim, [
+			{
+				keys: ['g', 'd'],
+				commandId: 'editor:follow-link',
+				requiresDomFallback: false,
+			},
+		], onCommand);
+		const registration = registrations[0];
+		if (!registration) {
+			throw new Error('Expected a Vim mapping registration.');
+		}
+		const { actionName } = registration;
+		const registeredAction = actions.get(actionName);
+
+		unregisterVimMappings(vim, registrations);
+		actions.get(actionName)?.({}, undefined);
+
+		expect(actions.get(actionName)).not.toBe(registeredAction);
+		expect(onCommand).not.toHaveBeenCalled();
 	});
 });
 
@@ -92,7 +145,7 @@ describe('VimMappingRegistry', () => {
 			'action',
 			'obsidian-vim-commands-0',
 			undefined,
-			{},
+			{ context: 'normal' },
 		);
 
 		registry.clear();
@@ -139,11 +192,32 @@ describe('VimMappingRegistry', () => {
 	});
 });
 
-function vimApi() {
-	const defineAction = vi.fn<(name: string, action: VimAction) => void>();
-	const mapCommand = vi.fn<CodeMirrorVim['mapCommand']>();
-	const unmap = vi.fn<CodeMirrorVim['unmap']>();
+function vimApi(options: { mappings?: Array<Record<string, unknown>> } = {}) {
+	const mappings = options.mappings;
+	const actions = new Map<string, VimAction>();
+	const defineAction = vi.fn<(name: string, action: VimAction) => void>(
+		(name, action) => actions.set(name, action),
+	);
+	const mapCommand = vi.fn<CodeMirrorVim['mapCommand']>(
+		(keys, type, name, actionArgs, extra) => {
+			mappings?.unshift({
+				keys,
+				type,
+				[type]: name,
+				actionArgs,
+				...extra,
+			});
+		},
+	);
+	const unmap = vi.fn<CodeMirrorVim['unmap']>((keys, context) => {
+		const index = mappings?.findIndex(
+			(mapping) => mapping.keys === keys && mapping.context === context,
+		) ?? -1;
+		if (index >= 0) {
+			mappings?.splice(index, 1);
+		}
+	});
 	const vim: CodeMirrorVim = { defineAction, mapCommand, unmap };
 
-	return { vim, defineAction, mapCommand, unmap };
+	return { vim, actions, defineAction, mapCommand, unmap };
 }

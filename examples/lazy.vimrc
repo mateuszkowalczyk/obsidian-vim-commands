@@ -4,6 +4,14 @@
 " Default <Leader> is <Space>, matching LazyVim. To override, uncomment:
 " let mapleader = ","
 "
+" Before using this config, unassign the following default Obsidian
+" hotkeys under Settings -> Hotkeys (they conflict with the Navigation
+" mappings below):
+"   Ctrl/Cmd+O  quick switcher / open file   <-> <C-o>
+"   Ctrl/Cmd+I  italic                       <-> <C-i>
+"   Ctrl/Cmd+H  find and replace             <-> <C-h>
+"   Ctrl/Cmd+K  insert/edit link             <-> <C-k>
+"
 " Quick reference (most-used keys):
 "   <Leader><Space>  quick switcher (find files)
 "   <Leader>:        command palette
@@ -52,7 +60,7 @@ nmap <Leader>cR :obcommand<space>workspace:edit-file-title<CR>
 " Links
 nmap gd :obcommand<space>editor:follow-link<CR>
 nmap gr :obcommand<space>backlink:open<CR>
-nmap gO :obcommand<space>outline:open-for-current<CR>
+nmap gO :obcommand<space>outline:open<CR>
 
 " Search
 nmap <Leader>/ :obcommand<space>global-search:open<CR>
@@ -75,7 +83,7 @@ nmap <Leader>og :obcommand<space>graph:open-local<CR>
 nmap <Leader>oG :obcommand<space>graph:open<CR>
 nmap <Leader>oB :obcommand<space>bookmarks:open<CR>
 nmap <Leader>om :obcommand<space>bookmarks:bookmark-current-view<CR>
-nmap <Leader>oO :obcommand<space>outline:open-for-current<CR>
+nmap <Leader>oO :obcommand<space>outline:open<CR>
 
 " Obsidian-specific list toggles
 nmap <Leader>ox :obcommand<space>editor:toggle-checklist-status<CR>
@@ -84,7 +92,7 @@ nmap <Leader>oo :obcommand<space>editor:toggle-numbered-list<CR>
 
 " Git (requires obsidian-git community plugin)
 nmap <Leader>gg :obcommand<space>obsidian-git:open-git-view<CR>
-nmap <Leader>gC :obcommand<space>obsidian-git:push<CR> " Git: Commit-and-sync
+nmap <Leader>gC :obcommand<space>obsidian-git:push<CR>
 nmap <Leader>gf :obcommand<space>obsidian-git:open-history-view<CR>
 nmap <Leader>gd :obcommand<space>obsidian-git:open-diff-view<CR>
 nmap <Leader>gP :obcommand<space>obsidian-git:push2<CR>

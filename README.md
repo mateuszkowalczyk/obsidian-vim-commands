@@ -16,8 +16,8 @@ This plugin extends Obsidian's built-in Vim mode; it does not replace it. Enable
 
 1. Enable **Settings → Editor → Vim key bindings**.
 2. Install and enable **Vim Commands**.
-3. Create `.vimrc` in the root of your vault.
-4. Add mappings using this form ([examples below](#config-examples)):
+3. Create `.vimrc` in the root of your vault. You can start from the [LazyVim-inspired config](#lazyvim-inspired-config).
+4. Add mappings using this form ([examples below](#mapping-examples)):
 
 ```vim
 nmap <keys> :obcommand <command-id><CR>
@@ -31,7 +31,7 @@ Only `nmap ... :obcommand ...<CR>` and `let mapleader = "..."` are handled; unre
 
 If a key combination conflicts with an Obsidian hotkey, unassign that hotkey under **Settings → Hotkeys** first.
 
-To inspect available command IDs, open the developer console and run:
+To inspect available command IDs, open the developer console (**View → Toggle developer tools** or `Ctrl+Shift+I` / `Cmd+Option+I`) and run:
 
 ```js
 Object.entries(app.commands.commands).map(([id, command]) => [id, command.name]);
@@ -41,7 +41,7 @@ Object.entries(app.commands.commands).map(([id, command]) => [id, command.name])
 
 [Mini Vimrc](https://github.com/cabra-arretado/mini-vimrc-obsidian) complements this plugin well: Mini Vimrc configures editor behavior such as `inoremap jk <Esc>` and motion remaps, while Vim Commands invokes Obsidian commands throughout the app.
 
-## Config examples
+## Mapping examples
 
 ```vim
 let mapleader = ","
@@ -60,3 +60,7 @@ nmap L :obcommand workspace:next-tab<CR>
 " Commands from community plugins work too
 nmap <Leader>gg :obcommand obsidian-git:open-git-view<CR>
 ```
+
+## LazyVim-inspired config
+
+The [`examples/lazy.vimrc`](./examples/lazy.vimrc) file is a ready-to-adapt, LazyVim-inspired starter based on [LazyVim](https://www.lazyvim.org/) key mappings. Copy it to `<vault>/.vimrc`, trim what you don't need, and reload the plugin. Obsidian-specific commands are grouped under `<Leader>o*`.

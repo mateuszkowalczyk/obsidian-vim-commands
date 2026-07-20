@@ -63,4 +63,4 @@ nmap <Leader>gg :obcommand obsidian-git:open-git-view<CR>
 
 ## LazyVim-inspired config
 
-The [`examples/lazy.vimrc`](./examples/lazy.vimrc) file is a ready-to-adapt, LazyVim-inspired starter based on [LazyVim](https://www.lazyvim.org/) key mappings. Copy it to `<vault>/.vimrc`, trim what you don't need, and reload the plugin. Obsidian-specific commands are grouped under `<Leader>o*`.
+The [`examples/lazy.vimrc`](https://github.com/mateuszkowalczyk/obsidian-vim-commands/blob/master/examples/lazy.vimrc) file is a ready-to-adapt, LazyVim-inspired starter based on [LazyVim](https://www.lazyvim.org/) key mappings. Copy it to `<vault>/.vimrc`, trim what you don't need, and reload the plugin. Obsidian-specific commands are grouped under `<Leader>o*`.

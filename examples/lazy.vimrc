@@ -55,12 +55,11 @@ nmap <Leader>fn :obcommand<space>file-explorer:new-file<CR>
 nmap <Leader>fN :obcommand<space>file-explorer:new-file-in-new-pane<CR>
 nmap <Leader>fr :obcommand<space>file-explorer:reveal-active-file<CR>
 nmap <Leader>fD :obcommand<space>app:delete-file<CR>
-nmap <Leader>cR :obcommand<space>workspace:edit-file-title<CR>
+nmap <Leader>fR :obcommand<space>workspace:edit-file-title<CR>
 
 " Links
 nmap gd :obcommand<space>editor:follow-link<CR>
 nmap gr :obcommand<space>backlink:open<CR>
-nmap gO :obcommand<space>outline:open<CR>
 
 " Search
 nmap <Leader>/ :obcommand<space>global-search:open<CR>
@@ -70,30 +69,30 @@ nmap <Leader>sr :obcommand<space>editor:open-search-replace<CR>
 " Obsidian-specific notes
 nmap <Leader>od :obcommand<space>daily-notes<CR>
 nmap <Leader>ot :obcommand<space>insert-template<CR>
-nmap <Leader>oy :obcommand<space>workspace:copy-path<CR>
 
 " Obsidian-specific view toggles
-nmap <Leader>os :obcommand<space>editor:toggle-source<CR>
 nmap <Leader>ol :obcommand<space>app:toggle-left-sidebar<CR>
 nmap <Leader>or :obcommand<space>app:toggle-right-sidebar<CR>
+nmap <Leader>oS :obcommand<space>editor:toggle-source<CR>
 
 " Obsidian-specific navigation
-nmap <Leader>ob :obcommand<space>backlink:open<CR>
-nmap <Leader>og :obcommand<space>graph:open-local<CR>
-nmap <Leader>oG :obcommand<space>graph:open<CR>
-nmap <Leader>oB :obcommand<space>bookmarks:open<CR>
-nmap <Leader>om :obcommand<space>bookmarks:bookmark-current-view<CR>
+nmap <Leader>oB :obcommand<space>backlink:open<CR>
 nmap <Leader>oO :obcommand<space>outline:open<CR>
+nmap <Leader>op :obcommand<space>properties:open-local<CR>
 
 " Obsidian-specific list toggles
 nmap <Leader>ox :obcommand<space>editor:toggle-checklist-status<CR>
 nmap <Leader>ou :obcommand<space>editor:toggle-bullet-list<CR>
 nmap <Leader>oo :obcommand<space>editor:toggle-numbered-list<CR>
 
+" Obsidian-specific formatting toggles
+nmap <Leader>ob :obcommand<space>editor:toggle-bold<CR>
+nmap <Leader>oi :obcommand<space>editor:toggle-italics<CR>
+nmap <Leader>os :obcommand<space>editor:toggle-strikethrough<CR>
+
 " Git (requires obsidian-git community plugin)
 nmap <Leader>gg :obcommand<space>obsidian-git:open-git-view<CR>
-nmap <Leader>gC :obcommand<space>obsidian-git:push<CR>
-nmap <Leader>gf :obcommand<space>obsidian-git:open-history-view<CR>
 nmap <Leader>gd :obcommand<space>obsidian-git:open-diff-view<CR>
+nmap <Leader>gC :obcommand<space>obsidian-git:push<CR>
 nmap <Leader>gP :obcommand<space>obsidian-git:push2<CR>
 nmap <Leader>gp :obcommand<space>obsidian-git:pull<CR>

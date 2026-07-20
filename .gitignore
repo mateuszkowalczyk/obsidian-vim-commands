@@ -21,6 +21,3 @@ data.json
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store
 
-review.md
-1.0.md
-post-1.0.md

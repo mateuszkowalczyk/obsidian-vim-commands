@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-vim-commands",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Trigger Obsidian commands anywhere in the app from vim key sequences defined in a vimrc-style config file.",
 	"main": "main.js",
 	"type": "module",

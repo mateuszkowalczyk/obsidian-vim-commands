@@ -11,7 +11,29 @@ export const DEFAULT_SETTINGS: VimCommandsPluginSettings = {
 };
 
 const CONFIG_FILE_PATH_NAME = 'Config file path';
-const CONFIG_FILE_PATH_DESC = 'Path to the vimrc-style command mapping file in this vault.';
+const README_URL =
+	'https://github.com/mateuszkowalczyk/obsidian-vim-commands/blob/master/README.md';
+const EXAMPLE_CONFIG_URL =
+	'https://github.com/mateuszkowalczyk/obsidian-vim-commands/blob/master/examples/lazy.vimrc';
+
+function createConfigFilePathDescription(): DocumentFragment {
+	const description = createFragment();
+	description.append('Path to the vimrc-style command mapping file in this vault. See the ');
+	description.createEl('a', {
+		text: 'README',
+		href: README_URL,
+		attr: { target: '_blank', rel: 'noopener noreferrer' },
+	});
+	description.append(' for setup and syntax, or start with the ');
+	description.createEl('a', {
+		text: 'Example config',
+		href: EXAMPLE_CONFIG_URL,
+		attr: { target: '_blank', rel: 'noopener noreferrer' },
+	});
+	description.append('.');
+
+	return description;
+}
 
 // Obsidian 1.13 formalized this render definition in its public types. Keep a
 // structural declaration and display() fallback while supporting Obsidian 1.12.
@@ -33,7 +55,7 @@ export class VimCommandsSettingTab extends PluginSettingTab {
 		return [
 			{
 				name: CONFIG_FILE_PATH_NAME,
-				desc: CONFIG_FILE_PATH_DESC,
+				desc: createConfigFilePathDescription(),
 				render: (setting) => this.addConfigFilePathControl(setting),
 			},
 		];
@@ -46,7 +68,7 @@ export class VimCommandsSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName(CONFIG_FILE_PATH_NAME)
-			.setDesc(CONFIG_FILE_PATH_DESC)
+			.setDesc(createConfigFilePathDescription())
 			.then((setting) => this.addConfigFilePathControl(setting));
 	}
 

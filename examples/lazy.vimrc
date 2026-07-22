@@ -78,6 +78,7 @@ nmap <Leader>oS :obcommand<space>editor:toggle-source<CR>
 
 " Obsidian-specific navigation
 nmap <Leader>oB :obcommand<space>backlink:open<CR>
+nmap <Leader>oE :obcommand<space>editor:focus<CR>
 nmap <Leader>oO :obcommand<space>outline:open<CR>
 nmap <Leader>oP :obcommand<space>properties:open-local<CR>
 

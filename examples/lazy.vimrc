@@ -69,6 +69,7 @@ nmap <Leader>sr :obcommand<space>editor:open-search-replace<CR>
 " Obsidian-specific notes
 nmap <Leader>od :obcommand<space>daily-notes<CR>
 nmap <Leader>ot :obcommand<space>insert-template<CR>
+nmap <Leader>op :obcommand<space>markdown:add-metadata-property<CR>
 
 " Obsidian-specific view toggles
 nmap <Leader>ol :obcommand<space>app:toggle-left-sidebar<CR>
@@ -78,7 +79,7 @@ nmap <Leader>oS :obcommand<space>editor:toggle-source<CR>
 " Obsidian-specific navigation
 nmap <Leader>oB :obcommand<space>backlink:open<CR>
 nmap <Leader>oO :obcommand<space>outline:open<CR>
-nmap <Leader>op :obcommand<space>properties:open-local<CR>
+nmap <Leader>oP :obcommand<space>properties:open-local<CR>
 
 " Obsidian-specific list toggles
 nmap <Leader>ox :obcommand<space>editor:toggle-checklist-status<CR>
